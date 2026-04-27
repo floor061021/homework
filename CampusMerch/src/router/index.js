@@ -1,6 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import login from '../login.vue'
-import register from '../register.vue'
+import register from '../views/Customer/register.vue'
 import LeaderPage from '../LeaderPage.vue'
 
 const router = createRouter({
