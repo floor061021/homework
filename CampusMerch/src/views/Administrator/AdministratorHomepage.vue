@@ -285,19 +285,10 @@ onUnmounted(() => {
     
     <div class="admin-container">
       <!-- 侧边栏导航 -->
-      <aside class="sidebar">
-        <div class="sidebar-header">
-          <h2>管理中心</h2>
-        </div>
-        <nav class="sidebar-nav">
-          <div class="nav-item active">🏠 首页</div>
-          <div class="nav-item">📦 商品管理</div>
-          <div class="nav-item">📋 订单审核</div>
-          <div class="nav-item">🎨 定制订单</div>
-          <div class="nav-item">📊 数据报表</div>
-          <div class="nav-item">⚙️ 系统设置</div>
-        </nav>
-      </aside>
+      <AdministratorManage
+        active-item="home"
+        @select="(item) => { console.log('Selected:', item.value) }"
+      />
 
       <!-- 主内容区 -->
       <main class="main-content">

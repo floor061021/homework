@@ -268,21 +268,10 @@ const refreshData = () => {
     
     <div class="report-container">
       <!-- 侧边栏 -->
-      <aside class="sidebar">
-        <div class="sidebar-header">
-          <h2>数据报表</h2>
-        </div>
-        <nav class="sidebar-nav">
-          <div
-            v-for="type in reportTypes"
-            :key="type.value"
-            :class="['nav-item', { active: currentReportType === type.value }]"
-            @click="currentReportType = type.value"
-          >
-            {{ type.label }}
-          </div>
-        </nav>
-      </aside>
+      <AdministratorManage
+        active-item="report"
+        @select="(item) => { console.log('Selected:', item.value) }"
+      />
 
       <!-- 主内容区 -->
       <main class="main-content">
