@@ -5,6 +5,7 @@ import MyOrders from '../views/Customer/MyOrders.vue'
 import PersonCenter from '../views/Customer/PersonCenter.vue'
 import ProductDetails from '../views/Customer/ProductDetails.vue'
 import ProductHall from '../views/Customer/ProductHall.vue'
+import UploadForeign from '../views/Customer/UploadForeign.vue'
 import DataReport from '../views/Administrator/DataReport.vue'
 import  AdministratorHomepage from '../views/Administrator/AdministratorHomepage.vue'
 import ProductManagement from '../views/Administrator/ProductManagement.vue'
@@ -41,6 +42,11 @@ const router = createRouter({
       path: '/producthall',
       name: 'ProductHall',
       component: ProductHall,
+    },
+    {
+      path: '/uploadforeign',
+      name: 'UploadForeign',
+      component: UploadForeign,
     },
     {
       path: '/datareport',
