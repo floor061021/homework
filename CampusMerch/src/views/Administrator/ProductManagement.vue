@@ -1,6 +1,6 @@
 <script setup>
 import { ref, computed } from 'vue'
-import Header from '../../components/header.vue'
+import Header from '../../components/headerUser.vue'
 
 // 当前激活的标签页
 const activeTab = ref('products')

@@ -1,6 +1,6 @@
 <script setup>
 import { ref } from 'vue'
-import Header from '../../components/header.vue'
+import Header from '../../components/headerUser.vue'
 
 // 文件输入引用
 const fileInputRef = ref(null)

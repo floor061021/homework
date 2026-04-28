@@ -1,6 +1,6 @@
 <script setup>
 import { ref } from 'vue'
-import Header from '../../components/header.vue'
+import Header from '../../components/headerUser.vue'
 
 // 控制登录弹窗显示/隐藏
 const showLoginModal = ref(false)

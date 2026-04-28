@@ -1,6 +1,6 @@
 <script setup>import { ref, onMounted, onUnmounted } from 'vue';
 import * as echarts from 'echarts';
-import Header from '../../components/header.vue';
+import Header from '../../components/headerUser.vue';
 // 核心指标数据
 const coreMetrics = ref({
  totalOrders: 1258,

@@ -1,6 +1,6 @@
 <script setup>
 import { ref, computed } from 'vue'
-import Header from '../../components/header.vue'
+import Header from '../../components/headerUser.vue'
 
 // 商品数据
 const product = ref({
