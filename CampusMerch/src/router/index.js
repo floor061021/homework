@@ -6,7 +6,7 @@ import PersonCenter from '../views/Customer/PersonCenter.vue'
 import ProductDetails from '../views/Customer/ProductDetails.vue'
 import ProductHall from '../views/Customer/ProductHall.vue'
 import DataReport from '../views/Administrator/DataReport.vue'
-import OrderReview from '../views/Administrator/OrderReview.vue'
+import  AdministratorHomepage from '../views/Administrator/AdministratorHomepage.vue'
 import ProductManagement from '../views/Administrator/ProductManagement.vue'
 
 const router = createRouter({
@@ -47,15 +47,16 @@ const router = createRouter({
       name: 'DataReport',
       component: DataReport,
     },
-    {
-      path: '/orderreview',
-      name: 'OrderReview',
-      component: OrderReview,
-    },
+    
     {
       path: '/productmanagement',
       name: 'ProductManagement',
       component: ProductManagement,
+    },
+    {
+      path: '/administratorhomepage',
+      name: 'AdministratorHomepage',
+      component: AdministratorHomepage,
     },
   ],
 })

@@ -1,5 +1,5 @@
 <script setup>
-
+defineEmits(['open-login'])
 </script>
 
 <template>
@@ -13,7 +13,7 @@
           <button class="search-btn">🔍</button>
         </div>
         <div class="user-actions">
-          <span class="user-icon">👤</span>
+          <span class="user-icon" @click="$emit('open-login')">👤</span>
           <span class="cart">🛒 ¥0.00</span>
         </div>
       </div>
@@ -100,8 +100,13 @@
 }
 
 .user-icon, .cart {
-  font-size: 16px;
+  font-size: 20px;
   cursor: pointer;
+  transition: transform 0.3s;
+}
+
+.user-icon:hover, .cart:hover {
+  transform: scale(1.1);
 }
 
 /* 导航菜单 */
