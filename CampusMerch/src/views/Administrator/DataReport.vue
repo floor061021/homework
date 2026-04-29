@@ -1,6 +1,5 @@
 <script setup>
 import { ref, computed } from 'vue'
-import Header from '../../components/headerUser.vue'
 
 // 报表类型
 const reportTypes = [
@@ -264,8 +263,6 @@ const refreshData = () => {
 
 <template>
   <div class="report-page">
-    <Header />
-    
     <div class="report-container">
       <!-- 侧边栏 -->
       <AdministratorManage
@@ -503,7 +500,7 @@ const refreshData = () => {
 <style scoped>
 .report-page {
   font-family: Arial, sans-serif;
-  padding-top: 120px;
+  padding-top: 20px;
   min-height: 100vh;
   background-color: #f8f8f8;
 }

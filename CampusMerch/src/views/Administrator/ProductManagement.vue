@@ -1,6 +1,5 @@
 <script setup>
 import { ref, computed } from 'vue'
-import Header from '../../components/headerUser.vue'
 
 // 当前激活的标签页
 const activeTab = ref('products')
@@ -459,9 +458,6 @@ const closeProgressModal = () => {
 
 <template>
   <div class="admin-page">
-    <!-- 顶部导航组件 -->
-    <Header />
-    
     <!-- 页面主体 -->
     <div class="admin-container">
       <!-- 侧边栏 -->
@@ -781,7 +777,7 @@ const closeProgressModal = () => {
 <style scoped>
 .admin-page {
   font-family: Arial, sans-serif;
-  padding-top: 120px;
+  padding-top: 20px;
   min-height: 100vh;
   background-color: #f8f8f8;
 }
