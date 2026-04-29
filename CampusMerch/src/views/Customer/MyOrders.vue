@@ -1,6 +1,5 @@
 <script setup>
 import { ref, computed } from 'vue'
-import Header from '../../components/headerUser.vue'
 
 // 订单状态选项
 const statusOptions = [
@@ -95,9 +94,6 @@ const confirmReceipt = (orderId) => {
 
 <template>
   <div class="my-orders">
-    <!-- 顶部导航组件 -->
-    <Header />
-    
     <!-- 页面主体 -->
     <div class="page-container">
       <!-- 页面标题 -->
@@ -188,7 +184,6 @@ const confirmReceipt = (orderId) => {
 <style scoped>
 .my-orders {
   font-family: Arial, sans-serif;
-  padding-top: 120px;
   min-height: 100vh;
   background-color: #f8f8f8;
 }

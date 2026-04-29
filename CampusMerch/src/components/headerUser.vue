@@ -7,7 +7,7 @@ defineEmits(['open-login'])
     <!-- 顶部导航栏 -->
     <div class="top-header">
       <div class="header-content">
-        <div class="logo">校园物料</div>
+        <router-link to="/" class="logo">校园物料</router-link>
         <div class="search-bar">
           <input type="text" placeholder="产品搜索">
           <button class="search-btn">🔍</button>
@@ -22,15 +22,10 @@ defineEmits(['open-login'])
     <!-- 导航菜单 -->
     <nav class="main-nav">
       <div class="nav-content">
-        <a href="#" class="nav-item active">首页</a>
-        <a href="#" class="nav-item">商品</a>
-        <a href="#" class="nav-item">最新周边</a>
-        <a href="#" class="nav-item">连帽衫</a>
-        <a href="#" class="nav-item">衬衫</a>
-        <a href="#" class="nav-item">卫衣</a>
-        <a href="#" class="nav-item">帽子</a>
-        <a href="#" class="nav-item">裤子</a>
-        <a href="#" class="nav-item">博客</a>
+        <router-link to="/" class="nav-item" exact-active-class="active">商品大厅</router-link>
+        <router-link to="/uploadforeign" class="nav-item" exact-active-class="active">设计上传</router-link>
+        <router-link to="/myorders" class="nav-item" exact-active-class="active">我的订单</router-link>
+        <router-link to="/personcenter" class="nav-item" exact-active-class="active">个人中心</router-link>
       </div>
     </nav>
   </header>
@@ -67,6 +62,7 @@ defineEmits(['open-login'])
   font-weight: bold;
   color: #ffcc00;
   text-transform: uppercase;
+  text-decoration: none;
 }
 
 .search-bar {

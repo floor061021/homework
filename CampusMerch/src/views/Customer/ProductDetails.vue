@@ -1,6 +1,5 @@
 <script setup>
 import { ref, computed } from 'vue'
-import Header from '../../components/headerUser.vue'
 
 // 商品数据
 const product = ref({
@@ -138,8 +137,6 @@ const setMainImage = (index) => {
 
 <template>
   <div class="product-detail-page">
-    <Header />
-    
     <div class="product-container">
       <!-- 面包屑导航 -->
       <div class="breadcrumbs">
@@ -284,7 +281,6 @@ const setMainImage = (index) => {
 <style scoped>
 .product-detail-page {
   font-family: Arial, sans-serif;
-  padding-top: 120px;
   min-height: 100vh;
   background-color: white;
 }

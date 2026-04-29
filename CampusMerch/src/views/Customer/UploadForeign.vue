@@ -1,6 +1,5 @@
 <script setup>
 import { ref } from 'vue'
-import Header from '../../components/headerUser.vue'
 
 // 文件输入引用
 const fileInputRef = ref(null)
@@ -197,8 +196,6 @@ const handleFiles = (files) => {
 
 <template>
   <div class="upload-page">
-    <Header />
-    
     <div class="upload-container">
       <!-- 页面标题 -->
       <div class="page-header">
@@ -379,7 +376,6 @@ const handleFiles = (files) => {
 <style scoped>
 .upload-page {
   font-family: Arial, sans-serif;
-  padding-top: 120px;
   min-height: 100vh;
   background-color: #f9f9f9;
 }
