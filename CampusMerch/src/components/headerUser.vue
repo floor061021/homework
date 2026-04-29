@@ -1,5 +1,20 @@
 <script setup>
-defineEmits(['open-login'])
+import { useUserStore } from '../stores/user'
+
+const userStore = useUserStore()
+
+const handleAvatarClick = () => {
+  if (userStore.isLoggedIn) {
+    userStore.toggleAvatarMenu()
+  } else {
+    userStore.openLoginModal()
+  }
+}
+
+const handleLogoutClick = () => {
+  userStore.openLogoutConfirm()
+  userStore.closeAvatarMenu()
+}
 </script>
 
 <template>
@@ -13,7 +28,33 @@ defineEmits(['open-login'])
           <button class="search-btn">🔍</button>
         </div>
         <div class="user-actions">
-          <span class="user-icon" @click="$emit('open-login')">👤</span>
+          <!-- 用户头像 -->
+          <div class="avatar-wrapper" @click.stop="handleAvatarClick">
+            <template v-if="userStore.isLoggedIn">
+              <img 
+                :src="userStore.userInfo.avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=1'" 
+                alt="用户头像" 
+                class="user-avatar"
+              />
+            </template>
+            <template v-else>
+              <span class="user-icon">👤</span>
+            </template>
+          </div>
+          
+          <!-- 头像下拉菜单 -->
+          <div v-if="userStore.showAvatarMenu" class="avatar-dropdown">
+            <div class="dropdown-content">
+              <router-link to="/personcenter" class="dropdown-item" @click="userStore.closeAvatarMenu">
+                个人中心
+              </router-link>
+              <div class="dropdown-divider"></div>
+              <button class="dropdown-item logout-btn" @click="handleLogoutClick">
+                退出登录
+              </button>
+            </div>
+          </div>
+          
           <span class="cart">🛒 ¥0.00</span>
         </div>
       </div>
@@ -93,15 +134,95 @@ defineEmits(['open-login'])
   display: flex;
   align-items: center;
   gap: 20px;
+  position: relative;
 }
 
-.user-icon, .cart {
+.avatar-wrapper {
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+}
+
+.user-icon {
+  font-size: 24px;
+  transition: transform 0.3s;
+}
+
+.user-icon:hover {
+  transform: scale(1.1);
+}
+
+.user-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #ffcc00;
+  transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.user-avatar:hover {
+  transform: scale(1.1);
+  box-shadow: 0 0 8px rgba(255, 204, 0, 0.5);
+}
+
+/* 头像下拉菜单 */
+.avatar-dropdown {
+  position: absolute;
+  top: 45px;
+  right: 0;
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+  min-width: 150px;
+  overflow: hidden;
+  z-index: 1001;
+}
+
+.dropdown-content {
+  padding: 8px 0;
+}
+
+.dropdown-item {
+  display: block;
+  padding: 10px 15px;
+  color: #333;
+  font-size: 14px;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.dropdown-item:hover {
+  background-color: #f5f5f5;
+}
+
+.dropdown-divider {
+  height: 1px;
+  background-color: #e0e0e0;
+  margin: 8px 0;
+}
+
+.logout-btn {
+  width: 100%;
+  text-align: left;
+  border: none;
+  background: none;
+  color: #ff4444;
+}
+
+.logout-btn:hover {
+  color: #cc0000;
+  background-color: #fff5f5;
+}
+
+.cart {
   font-size: 20px;
   cursor: pointer;
   transition: transform 0.3s;
 }
 
-.user-icon:hover, .cart:hover {
+.cart:hover {
   transform: scale(1.1);
 }
 
@@ -146,6 +267,12 @@ defineEmits(['open-login'])
   .nav-content {
     flex-wrap: wrap;
     gap: 15px;
+  }
+  
+  .avatar-dropdown {
+    right: auto;
+    left: 50%;
+    transform: translateX(-50%);
   }
 }
 </style>

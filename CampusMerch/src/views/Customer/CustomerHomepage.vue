@@ -1,9 +1,9 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
+import { useUserStore } from '../../stores/user'
 import Header from '../../components/headerUser.vue'
 
-// 控制登录弹窗显示/隐藏
-const showLoginModal = ref(false)
+const userStore = useUserStore()
 
 // 用户表单数据
 const loginForm = ref({
@@ -11,28 +11,30 @@ const loginForm = ref({
   password: ''
 })
 
-// 打开登录弹窗
-const openLoginModal = () => {
-  showLoginModal.value = true
-}
-
-// 关闭登录弹窗
-const closeLoginModal = () => {
-  showLoginModal.value = false
+// 提交登录
+const handleLogin = () => {
+  userStore.login(loginForm.value.username, loginForm.value.password)
   loginForm.value = { username: '', password: '' }
 }
 
-// 提交登录
-const handleLogin = () => {
-  alert('登录功能已触发，用户名: ' + loginForm.value.username)
-  closeLoginModal()
+// 点击外部关闭头像菜单
+const handleClickOutside = (event) => {
+  const target = event.target
+  if (!target.closest('.avatar-dropdown') && !target.closest('.avatar-trigger')) {
+    userStore.closeAvatarMenu()
+  }
+}
+
+// 监听点击事件
+if (typeof window !== 'undefined') {
+  window.addEventListener('click', handleClickOutside)
 }
 </script>
 
 <template>
   <div class="customer-homepage">
     <!-- 顶部导航组件 -->
-    <Header @open-login="openLoginModal" />
+    <Header @open-login="userStore.openLoginModal" />
     
     <!-- 主内容区 -->
     <main class="main-content">
@@ -40,11 +42,11 @@ const handleLogin = () => {
     </main>
     
     <!-- 登录弹窗 -->
-    <div v-if="showLoginModal" class="login-modal-overlay" @click.self="closeLoginModal">
+    <div v-if="userStore.showLoginModal" class="login-modal-overlay" @click.self="userStore.closeLoginModal">
       <div class="login-modal">
         <div class="login-header">
           <h3>用户登录</h3>
-          <button class="close-btn" @click="closeLoginModal">×</button>
+          <button class="close-btn" @click="userStore.closeLoginModal">×</button>
         </div>
         <div class="login-body">
           <form @submit.prevent="handleLogin" class="login-form">
@@ -80,6 +82,22 @@ const handleLogin = () => {
               <span>还没有账号? <a href="#">立即注册</a></span>
             </div>
           </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- 退出登录确认弹窗 -->
+    <div v-if="userStore.showLogoutConfirm" class="logout-modal-overlay" @click.self="userStore.closeLogoutConfirm">
+      <div class="logout-modal">
+        <div class="logout-header">
+          <h3>确认退出</h3>
+        </div>
+        <div class="logout-body">
+          <p>确定要退出登录吗？</p>
+        </div>
+        <div class="logout-footer">
+          <button class="cancel-btn" @click="userStore.closeLogoutConfirm">取消</button>
+          <button class="confirm-btn" @click="userStore.logout">确认退出</button>
         </div>
       </div>
     </div>
@@ -282,13 +300,101 @@ const handleLogin = () => {
   text-decoration: underline;
 }
 
+/* 退出确认弹窗样式 */
+.logout-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  animation: fadeIn 0.3s ease;
+}
+
+.logout-modal {
+  background-color: white;
+  border-radius: 8px;
+  width: 100%;
+  max-width: 360px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  overflow: hidden;
+}
+
+.logout-header {
+  padding: 20px 25px;
+  border-bottom: 1px solid #e0e0e0;
+  background-color: #f8f8f8;
+}
+
+.logout-header h3 {
+  margin: 0;
+  font-size: 18px;
+  color: #333;
+  font-weight: bold;
+}
+
+.logout-body {
+  padding: 30px 25px;
+  text-align: center;
+}
+
+.logout-body p {
+  margin: 0;
+  font-size: 15px;
+  color: #333;
+}
+
+.logout-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 15px 25px;
+  border-top: 1px solid #e0e0e0;
+  background-color: #fafafa;
+}
+
+.logout-footer .cancel-btn {
+  padding: 8px 20px;
+  background-color: transparent;
+  color: #666;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.logout-footer .cancel-btn:hover {
+  background-color: #f5f5f5;
+}
+
+.logout-footer .confirm-btn {
+  padding: 8px 20px;
+  background-color: #ff4444;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.logout-footer .confirm-btn:hover {
+  background-color: #cc0000;
+}
+
 /* 响应式设计 */
 @media (max-width: 768px) {
   .main-content {
     padding-top: 180px;
   }
   
-  .login-modal {
+  .login-modal, .logout-modal {
     margin: 0 20px;
   }
 }
