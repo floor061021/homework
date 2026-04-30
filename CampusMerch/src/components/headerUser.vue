@@ -1,7 +1,11 @@
 <script setup>
+import { ref } from 'vue'
+import { useRouter } from 'vue-router'
 import { useUserStore } from '../stores/user'
 
+const router = useRouter()
 const userStore = useUserStore()
+const searchKeyword = ref('')
 
 const handleAvatarClick = () => {
   if (userStore.isLoggedIn) {
@@ -15,6 +19,18 @@ const handleLogoutClick = () => {
   userStore.openLogoutConfirm()
   userStore.closeAvatarMenu()
 }
+
+const handleSearch = () => {
+  if (!searchKeyword.value.trim()) return
+  userStore.setSearchKeyword(searchKeyword.value.trim())
+  router.push('/')
+}
+
+const handleKeydown = (e) => {
+  if (e.key === 'Enter') {
+    handleSearch()
+  }
+}
 </script>
 
 <template>
@@ -24,8 +40,17 @@ const handleLogoutClick = () => {
       <div class="header-content">
         <router-link to="/" class="logo">校园文创预定</router-link>
         <div class="search-bar">
-          <input type="text" placeholder="产品搜索">
-          <button class="search-btn">🔍</button>
+          <input 
+            type="text" 
+            placeholder="产品搜索"
+            v-model="searchKeyword"
+            @keydown="handleKeydown"
+          >
+          <button class="search-btn" @click="handleSearch">
+          <svg class="search-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" stroke="#1a1a1a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
         </div>
         <div class="user-actions">
           <!-- 用户头像 -->
@@ -123,12 +148,19 @@ const handleLogoutClick = () => {
 }
 
 .search-btn {
-  padding: 12px 20px;
+  padding: 12px;
   background-color: #ffcc00;
   border: none;
   border-radius: 0 4px 4px 0;
   cursor: pointer;
-  font-size: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.search-icon {
+  width: 20px;
+  height: 20px;
 }
 
 .user-actions {

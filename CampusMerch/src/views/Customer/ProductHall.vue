@@ -1,5 +1,8 @@
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
+import { useUserStore } from '../../stores/user'
+
+const userStore = useUserStore()
 
 // 滚动到热门商品区域
 const scrollToProducts = () => {
@@ -24,11 +27,99 @@ const handleScroll = () => {
 
 onMounted(() => {
   window.addEventListener('scroll', handleScroll)
+  // 如果有搜索关键字，自动滚动到商品区域
+  if (userStore.searchKeyword) {
+    setTimeout(() => {
+      scrollToProducts()
+    }, 300)
+  }
 })
 
 onUnmounted(() => {
   window.removeEventListener('scroll', handleScroll)
 })
+
+// 分类选项
+const categories = [
+  { value: 'all', label: '全部' },
+  { value: 'top', label: '上衣' },
+  { value: 'pants', label: '裤子' },
+  { value: 'hat', label: '帽子' },
+  { value: 'other', label: '其他' }
+]
+
+// 当前选中的分类
+const activeCategory = ref('all')
+
+// 搜索关键字
+const localSearchKeyword = ref('')
+
+// 监听全局搜索关键字
+watch(() => userStore.searchKeyword, (newKeyword) => {
+  if (newKeyword) {
+    localSearchKeyword.value = newKeyword
+    // 检查是否是分类名称
+    const categoryMatch = categories.find(c => c.label === newKeyword)
+    if (categoryMatch) {
+      activeCategory.value = categoryMatch.value
+    } else {
+      // 搜索商品名称，保持分类为全部
+      activeCategory.value = 'all'
+    }
+    // 清除全局搜索关键字（避免下次进入页面还显示搜索状态）
+    setTimeout(() => {
+      userStore.clearSearchKeyword()
+    }, 500)
+  }
+}, { immediate: true })
+
+// 商品数据（带分类）
+const products = ref([
+  { id: 1, name: '连帽衫', price: 199, originalPrice: 399, discount: -48, category: 'top' },
+  { id: 2, name: 'T恤', price: 99, originalPrice: 249, discount: -60, category: 'top' },
+  { id: 3, name: '帽子', price: 59, originalPrice: 129, discount: -55, category: 'hat' },
+  { id: 4, name: '卫衣', price: 159, originalPrice: 359, discount: -55, category: 'top' },
+  { id: 5, name: '连帽衫', price: 199, originalPrice: 369, discount: -45, category: 'top' },
+  { id: 6, name: '连帽衫', price: 199, originalPrice: 499, discount: -60, category: 'top' },
+  { id: 7, name: '连帽衫', price: 199, originalPrice: 349, discount: -42, category: 'top' },
+  { id: 8, name: '连帽衫', price: 199, originalPrice: 349, discount: -42, category: 'top' }
+])
+
+// 过滤后的商品列表
+const filteredProducts = computed(() => {
+  let result = products.value
+  
+  // 先按分类过滤
+  if (activeCategory.value !== 'all') {
+    result = result.filter(product => product.category === activeCategory.value)
+  }
+  
+  // 再按搜索关键字过滤（如果有关键字且不是分类搜索）
+  if (localSearchKeyword.value) {
+    const keyword = localSearchKeyword.value.toLowerCase()
+    // 检查是否是分类名称
+    const isCategorySearch = categories.some(c => c.label === localSearchKeyword.value)
+    if (!isCategorySearch) {
+      result = result.filter(product => 
+        product.name.toLowerCase().includes(keyword)
+      )
+    }
+  }
+  
+  return result
+})
+
+// 搜索是否有结果
+const hasSearchResult = computed(() => {
+  if (!localSearchKeyword.value) return true
+  return filteredProducts.value.length > 0
+})
+
+// 切换分类
+const selectCategory = (category) => {
+  activeCategory.value = category
+  localSearchKeyword.value = ''
+}
 </script>
 
 <template>
@@ -49,71 +140,39 @@ onUnmounted(() => {
     <!-- 产品展示区 -->
     <section id="product-section" class="product-section">
       <h2 class="section-title">热门商品</h2>
-      <div class="product-grid">
-        <div class="product-card">
-          <div class="product-image">
-            <div class="discount-tag">-48%</div>
-          </div>
-          <h3>连帽衫</h3>
-          <p class="price">¥199.00</p>
-          <p class="original-price">¥399.00</p>
+      
+      <!-- 分类筛选栏 -->
+      <div class="category-filter">
+        <div 
+          v-for="category in categories" 
+          :key="category.value"
+          :class="['category-item', { active: activeCategory === category.value }]"
+          @click="selectCategory(category.value)"
+        >
+          {{ category.label }}
         </div>
-        <div class="product-card">
+      </div>
+      
+      <!-- 商品列表 -->
+      <div v-if="filteredProducts.length > 0" class="product-grid">
+        <div 
+          v-for="product in filteredProducts" 
+          :key="product.id" 
+          class="product-card"
+        >
           <div class="product-image">
-            <div class="discount-tag">-60%</div>
+            <div class="discount-tag">{{ product.discount }}%</div>
           </div>
-          <h3>T恤</h3>
-          <p class="price">¥99.00</p>
-          <p class="original-price">¥249.00</p>
+          <h3>{{ product.name }}</h3>
+          <p class="price">¥{{ product.price.toFixed(2) }}</p>
+          <p class="original-price">¥{{ product.originalPrice.toFixed(2) }}</p>
         </div>
-        <div class="product-card">
-          <div class="product-image">
-            <div class="discount-tag">-55%</div>
-          </div>
-          <h3>帽子</h3>
-          <p class="price">¥59.00</p>
-          <p class="original-price">¥129.00</p>
-        </div>
-        <div class="product-card">
-          <div class="product-image">
-            <div class="discount-tag">-55%</div>
-          </div>
-          <h3>卫衣</h3>
-          <p class="price">¥159.00</p>
-          <p class="original-price">¥359.00</p>
-        </div>
-        <div class="product-card">
-          <div class="product-image">
-            <div class="discount-tag">-45%</div>
-          </div>
-          <h3>连帽衫</h3>
-          <p class="price">¥199.00</p>
-          <p class="original-price">¥369.00</p>
-        </div>
-        <div class="product-card">
-          <div class="product-image">
-            <div class="discount-tag">-60%</div>
-          </div>
-          <h3>连帽衫</h3>
-          <p class="price">¥199.00</p>
-          <p class="original-price">¥499.00</p>
-        </div>
-        <div class="product-card">
-          <div class="product-image">
-            <div class="discount-tag">-42%</div>
-          </div>
-          <h3>连帽衫</h3>
-          <p class="price">¥199.00</p>
-          <p class="original-price">¥349.00</p>
-        </div>
-        <div class="product-card">
-          <div class="product-image">
-            <div class="discount-tag">-42%</div>
-          </div>
-          <h3>连帽衫</h3>
-          <p class="price">¥199.00</p>
-          <p class="original-price">¥349.00</p>
-        </div>
+      </div>
+      
+      <!-- 空状态 -->
+      <div v-else class="empty-state">
+        <div class="empty-icon">📦</div>
+        <p>{{ localSearchKeyword ? '暂无该商品' : '该类商品不存在' }}</p>
       </div>
     </section>
 
@@ -195,18 +254,67 @@ onUnmounted(() => {
   font-size: 28px;
   font-weight: bold;
   color: #333;
+  margin-bottom: 20px;
+}
+
+/* 分类筛选栏 */
+.category-filter {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
   margin-bottom: 40px;
+  flex-wrap: wrap;
+}
+
+.category-item {
+  padding: 10px 25px;
+  background-color: #f5f5f5;
+  border-radius: 25px;
+  font-size: 14px;
+  color: #666;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.category-item:hover {
+  background-color: #e8e8e8;
+}
+
+.category-item.active {
+  background-color: #ffcc00;
+  color: #1a1a1a;
+  font-weight: bold;
+}
+
+/* 空状态 */
+.empty-state {
+  text-align: center;
+  padding: 80px 20px;
+}
+
+.empty-icon {
+  font-size: 80px;
+  margin-bottom: 20px;
+}
+
+.empty-state p {
+  font-size: 16px;
+  color: #999;
+  margin: 0;
 }
 
 .product-grid {
   max-width: 1200px;
   margin: 0 auto;
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
   gap: 30px;
+  justify-items: center;
 }
 
 .product-card {
+  width: 100%;
+  max-width: 280px;
   background-color: white;
   border: 1px solid #e0e0e0;
   border-radius: 8px;

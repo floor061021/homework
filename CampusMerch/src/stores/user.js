@@ -20,6 +20,9 @@ export const useUserStore = defineStore('user', () => {
   
   // 用户头像下拉菜单显示状态
   const showAvatarMenu = ref(false)
+  
+  // 搜索关键字
+  const searchKeyword = ref('')
 
   // 登录
   function login(username, password) {
@@ -79,6 +82,16 @@ export const useUserStore = defineStore('user', () => {
   function updateUserInfo(info) {
     userInfo.value = { ...userInfo.value, ...info }
   }
+  
+  // 设置搜索关键字
+  function setSearchKeyword(keyword) {
+    searchKeyword.value = keyword
+  }
+  
+  // 清除搜索关键字
+  function clearSearchKeyword() {
+    searchKeyword.value = ''
+  }
 
   return {
     isLoggedIn,
@@ -86,6 +99,7 @@ export const useUserStore = defineStore('user', () => {
     showLoginModal,
     showLogoutConfirm,
     showAvatarMenu,
+    searchKeyword,
     login,
     logout,
     openLoginModal,
@@ -94,6 +108,8 @@ export const useUserStore = defineStore('user', () => {
     closeLogoutConfirm,
     toggleAvatarMenu,
     closeAvatarMenu,
-    updateUserInfo
+    updateUserInfo,
+    setSearchKeyword,
+    clearSearchKeyword
   }
 })
