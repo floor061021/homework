@@ -1,11 +1,33 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '../stores/user'
 
 const router = useRouter()
 const userStore = useUserStore()
 const searchKeyword = ref('')
+const showSuggestions = ref(false)
+
+// 搜索建议数据
+const searchSuggestions = [
+  { type: 'product', label: '连帽衫', value: '连帽衫' },
+  { type: 'product', label: 'T恤', value: 'T恤' },
+  { type: 'product', label: '卫衣', value: '卫衣' },
+  { type: 'product', label: '帽子', value: '帽子' },
+  { type: 'category', label: '上衣', value: '上衣' },
+  { type: 'category', label: '裤子', value: '裤子' },
+  { type: 'category', label: '帽子', value: '帽子' },
+  { type: 'category', label: '其他', value: '其他' }
+]
+
+// 过滤后的搜索建议
+const filteredSuggestions = computed(() => {
+  if (!searchKeyword.value.trim()) return []
+  const keyword = searchKeyword.value.toLowerCase()
+  return searchSuggestions.filter(item => 
+    item.label.toLowerCase().includes(keyword)
+  ).slice(0, 6)
+})
 
 const handleAvatarClick = () => {
   if (userStore.isLoggedIn) {
@@ -20,17 +42,57 @@ const handleLogoutClick = () => {
   userStore.closeAvatarMenu()
 }
 
-const handleSearch = () => {
-  if (!searchKeyword.value.trim()) return
-  userStore.setSearchKeyword(searchKeyword.value.trim())
+const handleSearch = (keyword = searchKeyword.value) => {
+  if (!keyword.trim()) return
+  userStore.setSearchKeyword(keyword.trim())
   router.push('/')
+  searchKeyword.value = ''
+  showSuggestions.value = false
 }
 
 const handleKeydown = (e) => {
   if (e.key === 'Enter') {
     handleSearch()
+  } else if (e.key === 'Escape') {
+    showSuggestions.value = false
   }
 }
+
+const selectSuggestion = (item) => {
+  handleSearch(item.value)
+}
+
+const handleInputFocus = () => {
+  if (searchKeyword.value.trim()) {
+    showSuggestions.value = true
+  }
+}
+
+const handleInputBlur = () => {
+  setTimeout(() => {
+    showSuggestions.value = false
+  }, 200)
+}
+
+const handleInput = () => {
+  showSuggestions.value = searchKeyword.value.trim() !== ''
+}
+
+// 点击外部关闭建议列表
+const handleClickOutside = (e) => {
+  const searchBar = document.querySelector('.search-bar')
+  if (searchBar && !searchBar.contains(e.target)) {
+    showSuggestions.value = false
+  }
+}
+
+onMounted(() => {
+  document.addEventListener('click', handleClickOutside)
+})
+
+onUnmounted(() => {
+  document.removeEventListener('click', handleClickOutside)
+})
 </script>
 
 <template>
@@ -45,12 +107,29 @@ const handleKeydown = (e) => {
             placeholder="产品搜索"
             v-model="searchKeyword"
             @keydown="handleKeydown"
+            @focus="handleInputFocus"
+            @blur="handleInputBlur"
+            @input="handleInput"
           >
           <button class="search-btn" @click="handleSearch">
-          <svg class="search-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" stroke="#1a1a1a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-        </button>
+            <svg class="search-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" stroke="#1a1a1a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+          
+          <!-- 搜索建议下拉列表 -->
+          <div v-if="showSuggestions && filteredSuggestions.length > 0" class="search-suggestions">
+            <div 
+              v-for="(item, index) in filteredSuggestions" 
+              :key="index"
+              class="suggestion-item"
+              @click="selectSuggestion(item)"
+            >
+              <span class="suggestion-icon">{{ item.type === 'category' ? '📁' : '👕' }}</span>
+              <span class="suggestion-label">{{ item.label }}</span>
+              <span class="suggestion-type">{{ item.type === 'category' ? '分类' : '商品' }}</span>
+            </div>
+          </div>
         </div>
         <div class="user-actions">
           <!-- 用户头像 -->
@@ -137,6 +216,7 @@ const handleKeydown = (e) => {
   flex: 1;
   max-width: 500px;
   margin: 0 30px;
+  position: relative;
 }
 
 .search-bar input {
@@ -161,6 +241,53 @@ const handleKeydown = (e) => {
 .search-icon {
   width: 20px;
   height: 20px;
+}
+
+/* 搜索建议下拉列表 */
+.search-suggestions {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background-color: white;
+  border: 1px solid #e0e0e0;
+  border-top: none;
+  border-radius: 0 0 4px 4px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  z-index: 1001;
+  max-height: 240px;
+  overflow-y: auto;
+}
+
+.suggestion-item {
+  display: flex;
+  align-items: center;
+  padding: 10px 15px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.suggestion-item:hover {
+  background-color: #f5f5f5;
+}
+
+.suggestion-icon {
+  margin-right: 10px;
+  font-size: 16px;
+}
+
+.suggestion-label {
+  flex: 1;
+  font-size: 14px;
+  color: #333;
+}
+
+.suggestion-type {
+  font-size: 12px;
+  color: #999;
+  background-color: #f0f0f0;
+  padding: 2px 8px;
+  border-radius: 10px;
 }
 
 .user-actions {

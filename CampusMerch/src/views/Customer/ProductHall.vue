@@ -73,16 +73,16 @@ watch(() => userStore.searchKeyword, (newKeyword) => {
   }
 }, { immediate: true })
 
-// 商品数据（带分类）
+// 商品数据（带分类和图片）
 const products = ref([
-  { id: 1, name: '连帽衫', price: 199, originalPrice: 399, discount: -48, category: 'top' },
-  { id: 2, name: 'T恤', price: 99, originalPrice: 249, discount: -60, category: 'top' },
-  { id: 3, name: '帽子', price: 59, originalPrice: 129, discount: -55, category: 'hat' },
-  { id: 4, name: '卫衣', price: 159, originalPrice: 359, discount: -55, category: 'top' },
-  { id: 5, name: '连帽衫', price: 199, originalPrice: 369, discount: -45, category: 'top' },
-  { id: 6, name: '连帽衫', price: 199, originalPrice: 499, discount: -60, category: 'top' },
-  { id: 7, name: '连帽衫', price: 199, originalPrice: 349, discount: -42, category: 'top' },
-  { id: 8, name: '连帽衫', price: 199, originalPrice: 349, discount: -42, category: 'top' }
+  { id: 1, name: '连帽衫', price: 199, originalPrice: 399, discount: -48, category: 'top', image: 'https://neeko-copilot.bytedance.net/api/text_to_image?prompt=black%20hoodie%20with%20colorful%20doodle%20design%20product%20photo%20white%20background&image_size=square' },
+  { id: 2, name: 'T恤', price: 99, originalPrice: 249, discount: -60, category: 'top', image: 'https://neeko-copilot.bytedance.net/api/text_to_image?prompt=white%20cotton%20t-shirt%20minimalist%20design%20product%20photo&image_size=square' },
+  { id: 3, name: '帽子', price: 59, originalPrice: 129, discount: -55, category: 'hat', image: 'https://neeko-copilot.bytedance.net/api/text_to_image?prompt=baseball%20cap%20casual%20style%20product%20photo%20white%20background&image_size=square' },
+  { id: 4, name: '卫衣', price: 159, originalPrice: 359, discount: -55, category: 'top', image: 'https://neeko-copilot.bytedance.net/api/text_to_image?prompt=grey%20crewneck%20sweatshirt%20product%20photo%20white%20background&image_size=square' },
+  { id: 5, name: '长裤', price: 179, originalPrice: 369, discount: -52, category: 'pants', image: 'https://neeko-copilot.bytedance.net/api/text_to_image?prompt=black%20cotton%20pants%20casual%20style%20product%20photo&image_size=square' },
+  { id: 6, name: '运动裤', price: 199, originalPrice: 499, discount: -60, category: 'pants', image: 'https://neeko-copilot.bytedance.net/api/text_to_image?prompt=sport%20jogger%20pants%20athletic%20wear%20product%20photo&image_size=square' },
+  { id: 7, name: '棒球帽', price: 69, originalPrice: 149, discount: -54, category: 'hat', image: 'https://neeko-copilot.bytedance.net/api/text_to_image?prompt=baseball%20cap%20with%20logo%20product%20photo%20white%20background&image_size=square' },
+  { id: 8, name: '帆布包', price: 49, originalPrice: 99, discount: -51, category: 'other', image: 'https://neeko-copilot.bytedance.net/api/text_to_image?prompt=canvas%20tote%20bag%20minimalist%20design%20product%20photo&image_size=square' }
 ])
 
 // 过滤后的商品列表
@@ -155,18 +155,20 @@ const selectCategory = (category) => {
       
       <!-- 商品列表 -->
       <div v-if="filteredProducts.length > 0" class="product-grid">
-        <div 
+        <router-link 
           v-for="product in filteredProducts" 
           :key="product.id" 
+          :to="`/productdetails/${product.id}`"
           class="product-card"
         >
           <div class="product-image">
+            <img :src="product.image" :alt="product.name" />
             <div class="discount-tag">{{ product.discount }}%</div>
           </div>
           <h3>{{ product.name }}</h3>
           <p class="price">¥{{ product.price.toFixed(2) }}</p>
           <p class="original-price">¥{{ product.originalPrice.toFixed(2) }}</p>
-        </div>
+        </router-link>
       </div>
       
       <!-- 空状态 -->
@@ -191,18 +193,68 @@ const selectCategory = (category) => {
   min-height: 100%;
 }
 
-/* 主横幅 */
+/* 主横幅 - 现代渐变背景 */
 .hero-banner {
-  background-color: #1a1a1a;
-  background-image: linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.7)), url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI1IiBoZWlnaHQ9IjUiPgo8cmVjdCB3aWR0aD0iNSIgaGVpZ2h0PSI1IiBmaWxsPSIjZmZjYzMwIj48L3JlY3Q+CjxwYXRoIGQ9Ik0wIDVMNSAwWk02IDRMNCA2Wk0tMSAxTDEgLTFaIiBzdHJva2U9IiNmZmNjMzAiIHN0cm9rZS13aWR0aD0iMSI+PC9wYXRoPgo8L3N2Zz4=');
-  background-size: cover;
-  background-position: center;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
   height: 500px;
   display: flex;
   align-items: center;
   justify-content: center;
   position: relative;
   overflow: hidden;
+}
+
+/* 动态光晕效果 */
+.hero-banner::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(255, 204, 0, 0.15) 0%, transparent 50%);
+  animation: pulse-glow 8s ease-in-out infinite;
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    transform: scale(1) rotate(0deg);
+    opacity: 0.5;
+  }
+  50% {
+    transform: scale(1.1) rotate(180deg);
+    opacity: 0.8;
+  }
+}
+
+/* 浮动粒子效果 */
+.hero-banner::after {
+  content: '';
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background-image: 
+    radial-gradient(circle at 20% 30%, rgba(255, 204, 0, 0.3) 0%, transparent 2%),
+    radial-gradient(circle at 80% 20%, rgba(255, 204, 0, 0.2) 0%, transparent 3%),
+    radial-gradient(circle at 40% 80%, rgba(255, 204, 0, 0.25) 0%, transparent 2%),
+    radial-gradient(circle at 70% 60%, rgba(255, 204, 0, 0.2) 0%, transparent 2.5%),
+    radial-gradient(circle at 10% 70%, rgba(255, 204, 0, 0.15) 0%, transparent 2%);
+  animation: float-particles 15s ease-in-out infinite;
+}
+
+@keyframes float-particles {
+  0%, 100% {
+    transform: translateY(0) translateX(0);
+  }
+  25% {
+    transform: translateY(-20px) translateX(10px);
+  }
+  50% {
+    transform: translateY(-10px) translateX(-10px);
+  }
+  75% {
+    transform: translateY(-30px) translateX(5px);
+  }
 }
 
 .banner-content {
@@ -214,33 +266,68 @@ const selectCategory = (category) => {
 .banner-text h1 {
   font-size: 80px;
   font-weight: bold;
-  color: #ffcc00;
+  background: linear-gradient(135deg, #ffcc00 0%, #ffdb4d 50%, #ffcc00 100%);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
   margin: 0;
   line-height: 1;
+  animation: shimmer 3s linear infinite;
+  text-shadow: 0 0 30px rgba(255, 204, 0, 0.3);
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: 200% center;
+  }
+  100% {
+    background-position: -200% center;
+  }
 }
 
 .banner-text h2 {
   font-size: 30px;
   font-weight: normal;
-  color: white;
+  color: rgba(255, 255, 255, 0.9);
   margin: 10px 0 40px 0;
+  letter-spacing: 3px;
+  text-transform: uppercase;
 }
 
 .shop-now-btn {
   padding: 15px 40px;
-  background-color: transparent;
-  border: 2px solid white;
-  color: white;
+  background: linear-gradient(135deg, #ffcc00 0%, #ffdb4d 100%);
+  border: none;
+  color: #1a1a1a;
   font-size: 16px;
   font-weight: bold;
-  border-radius: 4px;
+  border-radius: 30px;
   cursor: pointer;
-  transition: all 0.3s;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(255, 204, 0, 0.4);
+  position: relative;
+  overflow: hidden;
+}
+
+.shop-now-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+  transition: left 0.5s;
 }
 
 .shop-now-btn:hover {
-  background-color: white;
-  color: #1a1a1a;
+  transform: translateY(-3px);
+  box-shadow: 0 8px 25px rgba(255, 204, 0, 0.6);
+}
+
+.shop-now-btn:hover::before {
+  left: 100%;
 }
 
 /* 产品展示区 */
@@ -322,11 +409,15 @@ const selectCategory = (category) => {
   box-shadow: 0 2px 8px rgba(0,0,0,0.1);
   transition: transform 0.3s, box-shadow 0.3s;
   position: relative;
+  text-decoration: none;
+  color: inherit;
+  display: block;
 }
 
 .product-card:hover {
   transform: translateY(-5px);
   box-shadow: 0 5px 15px rgba(0,0,0,0.15);
+  text-decoration: none;
 }
 
 .product-image {
