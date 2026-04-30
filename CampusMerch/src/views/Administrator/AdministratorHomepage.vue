@@ -1,38 +1,5 @@
 <script setup>import { ref, onMounted, onUnmounted } from 'vue';
 import * as echarts from 'echarts';
-import AdministratorManage from '../../components/AdministratorManage.vue';
-import HeaderManager from '../../components/headerManager.vue';
-import DataReport from './DataReport.vue';
-import ProductManagement from './ProductManagement.vue';
-
-// 当前激活的页面
-const activePage = ref('home');
-// 页面切换动画状态
-const isTransitioning = ref(false);
-// 上一个页面（用于动画效果）
-const prevPage = ref('home');
-
-// 处理侧边栏菜单点击
-const handleMenuSelect = (item) => {
-  if (activePage.value === item.value) return;
-  
-  isTransitioning.value = true;
-  prevPage.value = activePage.value;
-  
-  setTimeout(() => {
-    activePage.value = item.value;
-    setTimeout(() => {
-      isTransitioning.value = false;
-    }, 100);
-  }, 300);
-};
-
-// 判断是否显示首页内容
-const showHome = () => activePage.value === 'home';
-// 判断是否显示数据报表
-const showReport = () => activePage.value === 'report';
-// 判断是否显示商品管理
-const showProducts = () => activePage.value === 'products';
 
 // 核心指标数据
 const coreMetrics = ref({
@@ -314,29 +281,14 @@ onUnmounted(() => {
 
 <template>
   <div class="admin-homepage">
-    <!-- 顶部样式 -->
-    <HeaderManager />
-    <div class="admin-container">
-      <!-- 侧边栏导航 -->
-      <AdministratorManage
-        :active-item="activePage"
-        @select="handleMenuSelect"
-      />
+    <!-- 页面标题 -->
+    <div class="page-header">
+      <h1>管理员首页</h1>
+      <p class="subtitle">欢迎回来，管理员</p>
+    </div>
 
-      <!-- 主内容区 -->
-      <main class="main-content">
-        <!-- 页面标题 -->
-        <div class="page-header">
-          <h1>{{ activePage === 'home' ? '管理员首页' : activePage === 'report' ? '数据报表' : '商品管理' }}</h1>
-          <p class="subtitle">{{ activePage === 'home' ? '欢迎回来，管理员' : activePage === 'report' ? '数据统计与分析' : '商品列表与管理' }}</p>
-        </div>
-
-        <!-- 首页内容区域 -->
-        <div 
-          v-show="showHome()" 
-          class="page-content home-content"
-          :class="{ 'transition-leave': isTransitioning && prevPage !== 'home', 'transition-enter': !isTransitioning }"
-        >
+    <!-- 首页内容区域 -->
+    <div class="page-content home-content">
           <!-- 核心指标卡片 -->
         <section class="metrics-section">
           <h2 class="section-title">核心指标</h2>
@@ -483,27 +435,7 @@ onUnmounted(() => {
             </div>
           </section>
         </div>
-      </div>
-
-      <!-- 数据报表页面内容 -->
-      <div 
-        v-show="showReport()" 
-        class="page-content"
-        :class="{ 'transition-leave': isTransitioning && prevPage !== 'report', 'transition-enter': !isTransitioning }"
-      >
-        <DataReport />
-      </div>
-
-      <!-- 商品管理页面内容 -->
-      <div 
-        v-show="showProducts()" 
-        class="page-content"
-        :class="{ 'transition-leave': isTransitioning && prevPage !== 'products', 'transition-enter': !isTransitioning }"
-      >
-        <ProductManagement />
-      </div>
-      </main>
-    </div>
+        </div>
   </div>
 </template>
 

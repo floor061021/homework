@@ -28,6 +28,8 @@
   overflow: hidden;
   z-index: 100;
   min-height: 70px;
+  margin: 0;
+  box-sizing: border-box;
 }
 
 /* 动态渐变背景 */

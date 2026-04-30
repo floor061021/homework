@@ -1,4 +1,6 @@
 <script setup>
+import { useRouter } from 'vue-router'
+
 defineProps({
   title: {
     type: String,
@@ -10,16 +12,21 @@ defineProps({
   }
 })
 
-const emit = defineEmits(['select'])
+const router = useRouter()
 
 const menuItems = [
-  { value: 'home', label: '首页', icon: '🏠' },
-  { value: 'products', label: '商品管理', icon: '📦' },
-  { value: 'report', label: '数据报表', icon: '📊' }
+  { value: 'home', label: '首页', icon: '🏠', path: '/admin' },
+  { value: 'products', label: '商品管理', icon: '📦', path: '/admin/products' },
+  { value: 'orders', label: '订单审核', icon: '📋', path: '/admin/orders' },
+  { value: 'custom', label: '定制订单', icon: '🎨', path: '/admin/custom' },
+  { value: 'report', label: '数据统计', icon: '📊', path: '/admin/report' },
+  { value: 'settings', label: '系统设置', icon: '⚙️', path: '/admin/settings' }
 ]
 
 const handleSelect = (item) => {
-  emit('select', item)
+  if (item.path) {
+    router.push(item.path)
+  }
 }
 </script>
 

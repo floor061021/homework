@@ -263,15 +263,8 @@ const refreshData = () => {
 
 <template>
   <div class="report-page">
-    <div class="report-container">
-      <!-- 侧边栏 -->
-      <AdministratorManage
-        active-item="report"
-        @select="(item) => { console.log('Selected:', item.value) }"
-      />
-
-      <!-- 主内容区 -->
-      <main class="main-content">
+    <!-- 主内容区 -->
+    <main class="main-content">
         <!-- 筛选栏 -->
         <div class="filter-section">
           <div class="filter-row">
@@ -493,7 +486,6 @@ const refreshData = () => {
           </div>
         </div>
       </main>
-    </div>
   </div>
 </template>
 
@@ -502,64 +494,14 @@ const refreshData = () => {
   font-family: Arial, sans-serif;
   padding-top: 20px;
   min-height: 100vh;
-  background-color: #f8f8f8;
-}
-
-.report-container {
-  display: flex;
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: 20px;
-  gap: 20px;
-}
-
-/* 侧边栏 */
-.sidebar {
-  width: 220px;
-  background-color: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-  padding: 20px;
-  flex-shrink: 0;
-  height: fit-content;
-}
-
-.sidebar-header h2 {
-  margin: 0 0 20px 0;
-  font-size: 18px;
-  color: #333;
-  padding-bottom: 15px;
-  border-bottom: 1px solid #f0f0f0;
-}
-
-.sidebar-nav {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-}
-
-.nav-item {
-  padding: 12px 15px;
-  color: #666;
-  font-size: 14px;
-  cursor: pointer;
-  border-radius: 4px;
-  transition: all 0.3s;
-}
-
-.nav-item:hover {
   background-color: #f5f5f5;
-}
-
-.nav-item.active {
-  background-color: #ffcc00;
-  color: #1a1a1a;
-  font-weight: bold;
 }
 
 /* 主内容区 */
 .main-content {
-  flex: 1;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 20px;
 }
 
 /* 筛选栏 */

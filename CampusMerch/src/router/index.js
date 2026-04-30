@@ -9,6 +9,7 @@ import UploadForeign from '../views/Customer/UploadForeign.vue'
 import DataReport from '../views/Administrator/DataReport.vue'
 import AdministratorHomepage from '../views/Administrator/AdministratorHomepage.vue'
 import ProductManagement from '../views/Administrator/ProductManagement.vue'
+import AdminLayout from '../views/Administrator/AdminLayout.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -56,19 +57,41 @@ const router = createRouter({
       component: register,
     },
     {
-      path: '/datareport',
-      name: 'DataReport',
-      component: DataReport,
-    },
-    {
-      path: '/productmanagement',
-      name: 'ProductManagement',
-      component: ProductManagement,
-    },
-    {
-      path: '/administratorhomepage',
-      name: 'AdministratorHomepage',
-      component: AdministratorHomepage,
+      path: '/admin',
+      name: 'AdminLayout',
+      component: AdminLayout,
+      children: [
+        {
+          path: '',
+          name: 'AdministratorHomepage',
+          component: AdministratorHomepage,
+        },
+        {
+          path: 'products',
+          name: 'ProductManagement',
+          component: ProductManagement,
+        },
+        {
+          path: 'orders',
+          name: 'OrderReview',
+          component: () => import('../views/Administrator/OrderReview.vue'),
+        },
+        {
+          path: 'custom',
+          name: 'CustomOrders',
+          component: () => import('../views/Administrator/CustomOrders.vue'),
+        },
+        {
+          path: 'report',
+          name: 'DataReport',
+          component: DataReport,
+        },
+        {
+          path: 'settings',
+          name: 'SystemSettings',
+          component: () => import('../views/Administrator/SystemSettings.vue'),
+        },
+      ],
     },
   ],
 })
