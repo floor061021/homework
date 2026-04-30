@@ -454,6 +454,92 @@ const closeProgressModal = () => {
   showProgressModal.value = false
   currentOrderProgress.value = null
 }
+
+// 商品添加弹窗
+const showAddProductModal = ref(false)
+
+const openAddProductModal = () => {
+  showAddProductModal.value = true
+}
+
+const closeAddProductModal = () => {
+  showAddProductModal.value = false
+  resetProductForm()
+}
+
+// 商品表单数据
+const newProduct = ref({
+  name: '',
+  code: '',
+  description: '',
+  price: '',
+  stock: '',
+  category: '',
+  coverImage: '',
+  allowCustom: false,
+  status: 'draft'
+})
+
+// 分类选项
+const categoryOptions = [
+  { value: '文化衫', label: '文化衫' },
+  { value: '卫衣', label: '卫衣' },
+  { value: 'T恤', label: 'T恤' },
+  { value: '帽子', label: '帽子' },
+  { value: '帆布包', label: '帆布包' },
+  { value: '文具', label: '文具' },
+  { value: '饰品', label: '饰品' }
+]
+
+// 重置表单
+const resetProductForm = () => {
+  newProduct.value = {
+    name: '',
+    code: '',
+    description: '',
+    price: '',
+    stock: '',
+    category: '',
+    coverImage: '',
+    allowCustom: false,
+    status: 'draft'
+  }
+}
+
+// 提交商品
+const submitProduct = () => {
+  if (!newProduct.value.name) {
+    alert('请输入商品名称')
+    return
+  }
+  if (!newProduct.value.price) {
+    alert('请输入商品价格')
+    return
+  }
+  if (!newProduct.value.stock) {
+    alert('请输入商品库存')
+    return
+  }
+  if (!newProduct.value.category) {
+    alert('请选择商品分类')
+    return
+  }
+
+  const product = {
+    id: 'P' + String(products.value.length + 1).padStart(3, '0'),
+    name: newProduct.value.name,
+    code: newProduct.value.code || 'AUTO' + Date.now(),
+    price: parseFloat(newProduct.value.price),
+    stock: parseInt(newProduct.value.stock),
+    status: newProduct.value.status,
+    category: newProduct.value.category,
+    createTime: new Date().toISOString().split('T')[0]
+  }
+
+  products.value.unshift(product)
+  alert(`商品 "${product.name}" 添加成功！`)
+  closeAddProductModal()
+}
 </script>
 
 <template>
@@ -464,7 +550,7 @@ const closeProgressModal = () => {
       <div>
           <div class="section-header">
             <h1>商品管理</h1>
-            <button class="add-btn">+ 添加商品</button>
+            <button class="add-btn" @click="openAddProductModal">+ 添加商品</button>
           </div>
           
           <!-- 状态筛选 -->
@@ -532,7 +618,89 @@ const closeProgressModal = () => {
             </div>
           </div>
         </div>
-      </main>
+    </main>
+  </div>
+
+  <!-- 商品添加弹窗 -->
+  <div v-if="showAddProductModal" class="add-product-modal-overlay" @click.self="closeAddProductModal">
+    <div class="add-product-modal">
+      <div class="add-product-modal-header">
+        <h2>添加商品</h2>
+        <button class="close-modal-btn" @click="closeAddProductModal">×</button>
+      </div>
+      <div class="add-product-modal-body">
+        <div class="form-grid">
+          <div class="form-group">
+            <label>商品名称 <span class="required">*</span></label>
+            <input type="text" v-model="newProduct.name" class="form-input" placeholder="请输入商品名称" />
+          </div>
+          <div class="form-group">
+            <label>商品编码</label>
+            <input type="text" v-model="newProduct.code" class="form-input" placeholder="系统自动生成" />
+          </div>
+          <div class="form-group">
+            <label>商品分类 <span class="required">*</span></label>
+            <select v-model="newProduct.category" class="form-select">
+              <option value="">请选择分类</option>
+              <option v-for="cat in categoryOptions" :key="cat.value" :value="cat.value">{{ cat.label }}</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>商品价格 <span class="required">*</span></label>
+            <input type="number" v-model="newProduct.price" class="form-input" placeholder="0.00" step="0.01" />
+          </div>
+          <div class="form-group">
+            <label>商品库存 <span class="required">*</span></label>
+            <input type="number" v-model="newProduct.stock" class="form-input" placeholder="0" />
+          </div>
+          <div class="form-group">
+            <label>商品状态</label>
+            <div class="status-options">
+              <label :class="['status-option', { selected: newProduct.status === 'draft' }]">
+                <input type="radio" v-model="newProduct.status" value="draft" />
+                <span class="status-dot draft"></span>
+                <span>草稿</span>
+              </label>
+              <label :class="['status-option', { selected: newProduct.status === 'active' }]">
+                <input type="radio" v-model="newProduct.status" value="active" />
+                <span class="status-dot active"></span>
+                <span>上架</span>
+              </label>
+              <label :class="['status-option', { selected: newProduct.status === 'inactive' }]">
+                <input type="radio" v-model="newProduct.status" value="inactive" />
+                <span class="status-dot inactive"></span>
+                <span>下架</span>
+              </label>
+            </div>
+          </div>
+          <div class="form-group full-width">
+            <label>商品描述</label>
+            <textarea v-model="newProduct.description" class="form-textarea" placeholder="请输入商品描述..."></textarea>
+          </div>
+          <div class="form-group full-width">
+            <label>封面图片</label>
+            <div class="image-upload-area">
+              <div class="image-upload-icon">📷</div>
+              <div class="image-upload-text">点击上传图片</div>
+              <div class="image-upload-hint">支持 JPG、PNG 格式，文件小于 5MB</div>
+            </div>
+          </div>
+          <div class="form-group full-width">
+            <div class="checkbox-group">
+              <label class="checkbox-wrapper">
+                <input type="checkbox" v-model="newProduct.allowCustom" />
+                <span class="checkbox-mark"></span>
+              </label>
+              <span class="checkbox-label">允许定制</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="add-product-modal-footer">
+        <button class="cancel-btn" @click="closeAddProductModal">取消</button>
+        <button class="submit-btn" @click="submitProduct">添加商品</button>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -1084,5 +1252,321 @@ const closeProgressModal = () => {
   .action-btn {
     width: 100%;
   }
+}
+
+/* 商品添加弹窗样式 */
+.add-product-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.add-product-modal {
+  background-color: white;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 700px;
+  max-height: 90vh;
+  overflow: hidden;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+}
+
+.add-product-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  background: linear-gradient(135deg, #ffcc00 0%, #ff9500 100%);
+  color: #1a1a1a;
+}
+
+.add-product-modal-header h2 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: bold;
+}
+
+.close-modal-btn {
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 50%;
+  font-size: 18px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s;
+}
+
+.close-modal-btn:hover {
+  background: rgba(0, 0, 0, 0.2);
+  transform: rotate(90deg);
+}
+
+.add-product-modal-body {
+  padding: 24px;
+  max-height: calc(90vh - 140px);
+  overflow-y: auto;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.form-group.full-width {
+  grid-column: 1 / -1;
+}
+
+.form-group label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 8px;
+}
+
+.form-group label .required {
+  color: #ff3b30;
+  margin-left: 2px;
+}
+
+.form-input,
+.form-textarea,
+.form-select {
+  padding: 12px 16px;
+  border: 2px solid #e8e8e8;
+  border-radius: 8px;
+  font-size: 14px;
+  transition: all 0.3s;
+  background: white;
+}
+
+.form-input:focus,
+.form-textarea:focus,
+.form-select:focus {
+  outline: none;
+  border-color: #ffcc00;
+  box-shadow: 0 0 0 3px rgba(255, 204, 0, 0.2);
+}
+
+.form-textarea {
+  resize: vertical;
+  min-height: 100px;
+  font-family: inherit;
+}
+
+.form-select {
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23666' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 16px center;
+  padding-right: 40px;
+}
+
+.checkbox-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 0;
+}
+
+.checkbox-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+.checkbox-wrapper input[type="checkbox"] {
+  position: absolute;
+  opacity: 0;
+  cursor: pointer;
+  height: 0;
+  width: 0;
+}
+
+.checkbox-mark {
+  width: 22px;
+  height: 22px;
+  background: white;
+  border: 2px solid #ddd;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s;
+}
+
+.checkbox-mark::after {
+  content: '✓';
+  font-size: 14px;
+  color: white;
+  opacity: 0;
+  transform: scale(0);
+  transition: all 0.2s;
+}
+
+.checkbox-wrapper input:checked ~ .checkbox-mark {
+  background: #ffcc00;
+  border-color: #ffcc00;
+}
+
+.checkbox-wrapper input:checked ~ .checkbox-mark::after {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.checkbox-label {
+  font-size: 14px;
+  color: #666;
+  user-select: none;
+}
+
+.image-upload-area {
+  border: 2px dashed #ddd;
+  border-radius: 8px;
+  padding: 40px 20px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s;
+  background: #fafafa;
+}
+
+.image-upload-area:hover {
+  border-color: #ffcc00;
+  background: #fffef5;
+}
+
+.image-upload-icon {
+  font-size: 48px;
+  margin-bottom: 12px;
+}
+
+.image-upload-text {
+  font-size: 14px;
+  color: #666;
+}
+
+.image-upload-hint {
+  font-size: 12px;
+  color: #999;
+  margin-top: 8px;
+}
+
+.status-options {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.status-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border: 2px solid #e8e8e8;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.status-option:hover {
+  border-color: #ffcc00;
+}
+
+.status-option input[type="radio"] {
+  display: none;
+}
+
+.status-option.selected {
+  border-color: #ffcc00;
+  background: #fffef5;
+}
+
+.status-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.status-dot.draft {
+  background: #999;
+}
+
+.status-dot.active {
+  background: #4caf50;
+}
+
+.status-dot.inactive {
+  background: #f44336;
+}
+
+.status-option span:last-child {
+  font-size: 14px;
+  color: #333;
+}
+
+.add-product-modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 20px 24px;
+  border-top: 1px solid #f0f0f0;
+  background: #fafafa;
+}
+
+.cancel-btn {
+  padding: 12px 24px;
+  background: white;
+  color: #666;
+  border: 2px solid #ddd;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.cancel-btn:hover {
+  border-color: #999;
+  color: #333;
+}
+
+.submit-btn {
+  padding: 12px 32px;
+  background: linear-gradient(135deg, #ffcc00 0%, #ff9500 100%);
+  color: #1a1a1a;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s;
+  box-shadow: 0 4px 12px rgba(255, 153, 0, 0.3);
+}
+
+.submit-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(255, 153, 0, 0.4);
+}
+
+.submit-btn:active {
+  transform: translateY(0);
 }
 </style>
