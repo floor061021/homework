@@ -1,5 +1,98 @@
 <script setup>
-defineEmits(['open-login'])
+import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { useRouter } from 'vue-router'
+import { useUserStore } from '../stores/user'
+
+const router = useRouter()
+const userStore = useUserStore()
+const searchKeyword = ref('')
+const showSuggestions = ref(false)
+
+// 搜索建议数据
+const searchSuggestions = [
+  { type: 'product', label: '连帽衫', value: '连帽衫' },
+  { type: 'product', label: 'T恤', value: 'T恤' },
+  { type: 'product', label: '卫衣', value: '卫衣' },
+  { type: 'product', label: '帽子', value: '帽子' },
+  { type: 'category', label: '上衣', value: '上衣' },
+  { type: 'category', label: '裤子', value: '裤子' },
+  { type: 'category', label: '帽子', value: '帽子' },
+  { type: 'category', label: '其他', value: '其他' }
+]
+
+// 过滤后的搜索建议
+const filteredSuggestions = computed(() => {
+  if (!searchKeyword.value.trim()) return []
+  const keyword = searchKeyword.value.toLowerCase()
+  return searchSuggestions.filter(item => 
+    item.label.toLowerCase().includes(keyword)
+  ).slice(0, 6)
+})
+
+const handleAvatarClick = () => {
+  if (userStore.isLoggedIn) {
+    userStore.toggleAvatarMenu()
+  } else {
+    userStore.openLoginModal()
+  }
+}
+
+const handleLogoutClick = () => {
+  userStore.openLogoutConfirm()
+  userStore.closeAvatarMenu()
+}
+
+const handleSearch = (keyword = searchKeyword.value) => {
+  if (!keyword.trim()) return
+  userStore.setSearchKeyword(keyword.trim())
+  router.push('/')
+  searchKeyword.value = ''
+  showSuggestions.value = false
+}
+
+const handleKeydown = (e) => {
+  if (e.key === 'Enter') {
+    handleSearch()
+  } else if (e.key === 'Escape') {
+    showSuggestions.value = false
+  }
+}
+
+const selectSuggestion = (item) => {
+  handleSearch(item.value)
+}
+
+const handleInputFocus = () => {
+  if (searchKeyword.value.trim()) {
+    showSuggestions.value = true
+  }
+}
+
+const handleInputBlur = () => {
+  setTimeout(() => {
+    showSuggestions.value = false
+  }, 200)
+}
+
+const handleInput = () => {
+  showSuggestions.value = searchKeyword.value.trim() !== ''
+}
+
+// 点击外部关闭建议列表
+const handleClickOutside = (e) => {
+  const searchBar = document.querySelector('.search-bar')
+  if (searchBar && !searchBar.contains(e.target)) {
+    showSuggestions.value = false
+  }
+}
+
+onMounted(() => {
+  document.addEventListener('click', handleClickOutside)
+})
+
+onUnmounted(() => {
+  document.removeEventListener('click', handleClickOutside)
+})
 </script>
 
 <template>
@@ -7,13 +100,65 @@ defineEmits(['open-login'])
     <!-- 顶部导航栏 -->
     <div class="top-header">
       <div class="header-content">
-        <router-link to="/" class="logo">校园物料</router-link>
+        <router-link to="/" class="logo">校园文创预定</router-link>
         <div class="search-bar">
-          <input type="text" placeholder="产品搜索">
-          <button class="search-btn">🔍</button>
+          <input 
+            type="text" 
+            placeholder="产品搜索"
+            v-model="searchKeyword"
+            @keydown="handleKeydown"
+            @focus="handleInputFocus"
+            @blur="handleInputBlur"
+            @input="handleInput"
+          >
+          <button class="search-btn" @click="handleSearch">
+            <svg class="search-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" stroke="#1a1a1a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+          
+          <!-- 搜索建议下拉列表 -->
+          <div v-if="showSuggestions && filteredSuggestions.length > 0" class="search-suggestions">
+            <div 
+              v-for="(item, index) in filteredSuggestions" 
+              :key="index"
+              class="suggestion-item"
+              @click="selectSuggestion(item)"
+            >
+              <span class="suggestion-icon">{{ item.type === 'category' ? '📁' : '👕' }}</span>
+              <span class="suggestion-label">{{ item.label }}</span>
+              <span class="suggestion-type">{{ item.type === 'category' ? '分类' : '商品' }}</span>
+            </div>
+          </div>
         </div>
         <div class="user-actions">
-          <span class="user-icon" @click="$emit('open-login')">👤</span>
+          <!-- 用户头像 -->
+          <div class="avatar-wrapper" @click.stop="handleAvatarClick">
+            <template v-if="userStore.isLoggedIn">
+              <img 
+                :src="userStore.userInfo.avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=1'" 
+                alt="用户头像" 
+                class="user-avatar"
+              />
+            </template>
+            <template v-else>
+              <svg t="1777463809803" class="user-icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="8185"><path d="M983.722576 312.747226a510.463422 510.463422 0 0 0-109.653876-162.815816A510.377422 510.377422 0 0 0 512.00011 0.00158a510.292422 510.292422 0 0 0-362.06859 149.92983A510.292422 510.292422 0 0 0 0.00169 512.001a510.121422 510.121422 0 0 0 149.92983 362.06759A510.292422 510.292422 0 0 0 512.00111 1023.99942a510.292422 510.292422 0 0 0 362.06759-149.92983A510.121422 510.121422 0 0 0 1023.99953 512c0-69.119922-13.567985-136.190846-40.276954-199.252774zM516.096105 577.023926a183.039793 183.039793 0 0 1-182.868792-182.868793c0-100.863886 82.005907-182.868793 182.783792-182.868792 100.863886 0 182.869793 82.004907 182.869793 182.869792a183.039793 183.039793 0 0 1-182.869793 182.867793zM320.342327 693.759794a311.977647 311.977647 0 0 1 195.669778-68.009923c71.763919 0 139.347842 23.465973 195.411779 67.924923a315.732642 315.732642 0 0 1 109.311876 166.911811 460.116479 460.116479 0 0 1-304.809654 114.68787 459.689479 459.689479 0 0 1-304.639655-114.60287A315.732642 315.732642 0 0 1 320.342327 693.759794z m413.695531-38.825956a362.665589 362.665589 0 0 0-108.885876-59.477933c32.255963-18.772979 59.562933-45.055949 79.61591-76.543913a232.532737 232.532737 0 0 0-195.924778-356.777596 232.532737 232.532737 0 0 0-196.180778 356.436597 234.299735 234.299735 0 0 0 79.18991 76.543913 362.921589 362.921589 0 0 0-110.250875 59.989932 369.321582 369.321582 0 0 0-117.589867 165.716812 457.727481 457.727481 0 0 1-115.199869-304.469655 456.788483 456.788483 0 0 1 134.399847-324.862632 457.556482 457.556482 0 0 1 324.692633-134.569847 457.641482 457.641482 0 0 1 324.692632 134.569847 458.239481 458.239481 0 0 1 134.485847 324.862632 456.873482 456.873482 0 0 1-115.199869 304.383655 369.236582 369.236582 0 0 0-117.759867-165.801812z" p-id="8186" fill="#ffcc00"></path></svg>
+            </template>
+          </div>
+          
+          <!-- 头像下拉菜单 -->
+          <div v-if="userStore.showAvatarMenu" class="avatar-dropdown">
+            <div class="dropdown-content">
+              <router-link to="/personcenter" class="dropdown-item" @click="userStore.closeAvatarMenu">
+                个人中心
+              </router-link>
+              <div class="dropdown-divider"></div>
+              <button class="dropdown-item logout-btn" @click="handleLogoutClick">
+                退出登录
+              </button>
+            </div>
+          </div>
+          
           <span class="cart">🛒 ¥0.00</span>
         </div>
       </div>
@@ -45,20 +190,20 @@ defineEmits(['open-login'])
 /* 顶部导航栏 */
 .top-header {
   border-bottom: 1px solid #e0e0e0;
-  padding: 10px 0;
+  padding: 15px 0;
 }
 
 .header-content {
-  max-width: 1200px;
+  max-width: 1100px;
   margin: 0 auto;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0 20px;
+  padding: 0 30px;
 }
 
 .logo {
-  font-size: 24px;
+  font-size: 32px;
   font-weight: bold;
   color: #ffcc00;
   text-transform: uppercase;
@@ -69,39 +214,176 @@ defineEmits(['open-login'])
   display: flex;
   align-items: center;
   flex: 1;
-  max-width: 400px;
-  margin: 0 20px;
+  max-width: 500px;
+  margin: 0 30px;
+  position: relative;
 }
 
 .search-bar input {
   width: 100%;
-  padding: 8px 12px;
+  padding: 12px 15px;
   border: 1px solid #ddd;
   border-radius: 4px 0 0 4px;
-  font-size: 14px;
+  font-size: 16px;
 }
 
 .search-btn {
-  padding: 8px 15px;
+  padding: 12px;
   background-color: #ffcc00;
   border: none;
   border-radius: 0 4px 4px 0;
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.search-icon {
+  width: 20px;
+  height: 20px;
+}
+
+/* 搜索建议下拉列表 */
+.search-suggestions {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background-color: white;
+  border: 1px solid #e0e0e0;
+  border-top: none;
+  border-radius: 0 0 4px 4px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  z-index: 1001;
+  max-height: 240px;
+  overflow-y: auto;
+}
+
+.suggestion-item {
+  display: flex;
+  align-items: center;
+  padding: 10px 15px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.suggestion-item:hover {
+  background-color: #f5f5f5;
+}
+
+.suggestion-icon {
+  margin-right: 10px;
+  font-size: 16px;
+}
+
+.suggestion-label {
+  flex: 1;
+  font-size: 14px;
+  color: #333;
+}
+
+.suggestion-type {
+  font-size: 12px;
+  color: #999;
+  background-color: #f0f0f0;
+  padding: 2px 8px;
+  border-radius: 10px;
 }
 
 .user-actions {
   display: flex;
   align-items: center;
-  gap: 20px;
+  gap: 25px;
+  position: relative;
 }
 
-.user-icon, .cart {
-  font-size: 20px;
+.avatar-wrapper {
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+}
+
+.user-icon {
+  width: 48px;
+  height: 48px;
+  transition: transform 0.3s;
+}
+
+.user-icon:hover {
+  transform: scale(1.1);
+}
+
+.user-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid #ffcc00;
+  transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.user-avatar:hover {
+  transform: scale(1.1);
+  box-shadow: 0 0 10px rgba(255, 204, 0, 0.5);
+}
+
+/* 头像下拉菜单 */
+.avatar-dropdown {
+  position: absolute;
+  top: 45px;
+  right: 0;
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+  min-width: 150px;
+  overflow: hidden;
+  z-index: 1001;
+}
+
+.dropdown-content {
+  padding: 8px 0;
+}
+
+.dropdown-item {
+  display: block;
+  padding: 10px 15px;
+  color: #333;
+  font-size: 14px;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.dropdown-item:hover {
+  background-color: #f5f5f5;
+}
+
+.dropdown-divider {
+  height: 1px;
+  background-color: #e0e0e0;
+  margin: 8px 0;
+}
+
+.logout-btn {
+  width: 100%;
+  text-align: left;
+  border: none;
+  background: none;
+  color: #ff4444;
+}
+
+.logout-btn:hover {
+  color: #cc0000;
+  background-color: #fff5f5;
+}
+
+.cart {
+  font-size: 26px;
   cursor: pointer;
   transition: transform 0.3s;
 }
 
-.user-icon:hover, .cart:hover {
+.cart:hover {
   transform: scale(1.1);
 }
 
@@ -111,24 +393,42 @@ defineEmits(['open-login'])
 }
 
 .nav-content {
-  max-width: 1200px;
+  max-width: 1100px;
   margin: 0 auto;
   display: flex;
   justify-content: center;
-  gap: 30px;
-  padding: 15px 20px;
+  gap: 45px;
+  padding: 20px 30px;
 }
 
 .nav-item {
   text-decoration: none;
   color: #333;
-  font-size: 14px;
+  font-size: 18px;
   font-weight: 500;
   transition: color 0.3s;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .nav-item:hover, .nav-item.active {
   color: #ffcc00;
+}
+
+.nav-item.active .nav-icon {
+  fill: #ffcc00;
+}
+
+.nav-icon {
+  width: 20px;
+  height: 20px;
+  fill: #666;
+  transition: fill 0.3s;
+}
+
+.nav-item:hover .nav-icon {
+  fill: #ffcc00;
 }
 
 /* 响应式设计 */
@@ -146,6 +446,12 @@ defineEmits(['open-login'])
   .nav-content {
     flex-wrap: wrap;
     gap: 15px;
+  }
+  
+  .avatar-dropdown {
+    right: auto;
+    left: 50%;
+    transform: translateX(-50%);
   }
 }
 </style>

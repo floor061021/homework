@@ -1,42 +1,277 @@
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
+import { useRoute } from 'vue-router'
 
-// 商品数据
-const product = ref({
-  id: 'P001',
-  name: 'Drew Doodle Joy Hoodie',
-  price: 199,
-  originalPrice: 299,
-  discount: '33%',
-  description: 'Introducing the Drew House Doodle Joy Hoodie. It is fun and colorful hoodies embraced with the signature drew house smiley face. Made with premium materials, this hoodie will make you smile. The Drew House Doodle Joy Hoodie is a perfect choice to add a playful touch to your outfits. The Drew House Doodle Joy Hoodie is a perfect choice to add a playful touch to your outfits. These hoodies are really made with great care, which gives you a warm hug and feel soft and smooth against your skin. Available now in various sizes for both kids and adults.',
-  details: [
-    '100% cotton',
-    'flat knit rib trim with a drop shoulder',
-    'rib cuff and waistband',
-    'double layer hood',
-    'kangaroo pocket',
-    'screen print on front & sleeve',
-    'imported'
-  ],
-  images: [
-    'https://neeko-copilot.bytedance.net/api/text_to_image?prompt=black%20hoodie%20with%20colorful%20doodle%20design%20drew%20house%20style%20product%20photo%20white%20background&image_size=portrait_4_3',
-    'https://neeko-copilot.bytedance.net/api/text_to_image?prompt=black%20hoodie%20with%20colorful%20smiley%20face%20design%20side%20view%20product%20photo&image_size=portrait_4_3',
-    'https://neeko-copilot.bytedance.net/api/text_to_image?prompt=black%20hoodie%20back%20view%20with%20doodle%20art%20product%20photography&image_size=portrait_4_3',
-    'https://neeko-copilot.bytedance.net/api/text_to_image?prompt=person%20wearing%20black%20drew%20house%20hoodie%20casual%20style%20lifestyle%20photo&image_size=portrait_4_3'
-  ],
-  colors: [
-    { id: 'black', name: 'Black', hex: '#000000' },
-    { id: 'white', name: 'White', hex: '#FFFFFF' },
-    { id: 'grey', name: 'Heather Grey', hex: '#808080' }
-  ],
-  sizes: [
-    { id: 'xs', name: 'XS', stock: 5 },
-    { id: 's', name: 'S', stock: 12 },
-    { id: 'm', name: 'M', stock: 8 },
-    { id: 'l', name: 'L', stock: 15 },
-    { id: 'xl', name: 'XL', stock: 6 },
-    { id: 'xxl', name: 'XXL', stock: 3 }
-  ]
+const route = useRoute()
+
+// 商品数据库
+const productsDB = [
+  { 
+    id: 1, 
+    name: '连帽衫', 
+    price: 199, 
+    originalPrice: 399, 
+    discount: '-48%',
+    description: '这款连帽衫采用优质面料，舒适保暖，时尚百搭。经典的设计风格适合各种场合穿着。',
+    details: [
+      '100%纯棉面料',
+      '连帽设计',
+      '袋鼠口袋',
+      '罗纹袖口和下摆',
+      '高品质印花'
+    ],
+    images: [
+      'https://neeko-copilot.bytedance.net/api/text_to_image?prompt=black%20hoodie%20with%20colorful%20doodle%20design%20product%20photo%20white%20background&image_size=portrait_4_3',
+      'https://neeko-copilot.bytedance.net/api/text_to_image?prompt=black%20hoodie%20side%20view%20product%20photo&image_size=portrait_4_3',
+      'https://neeko-copilot.bytedance.net/api/text_to_image?prompt=black%20hoodie%20back%20view%20product%20photography&image_size=portrait_4_3',
+      'https://neeko-copilot.bytedance.net/api/text_to_image?prompt=person%20wearing%20black%20hoodie%20casual%20style%20lifestyle%20photo&image_size=portrait_4_3'
+    ],
+    colors: [
+      { id: 'black', name: 'Black', hex: '#000000' },
+      { id: 'white', name: 'White', hex: '#FFFFFF' },
+      { id: 'grey', name: 'Heather Grey', hex: '#808080' }
+    ],
+    sizes: [
+      { id: 'xs', name: 'XS', stock: 5 },
+      { id: 's', name: 'S', stock: 12 },
+      { id: 'm', name: 'M', stock: 8 },
+      { id: 'l', name: 'L', stock: 15 },
+      { id: 'xl', name: 'XL', stock: 6 },
+      { id: 'xxl', name: 'XXL', stock: 3 }
+    ]
+  },
+  { 
+    id: 2, 
+    name: 'T恤', 
+    price: 99, 
+    originalPrice: 249, 
+    discount: '-60%',
+    description: '简约时尚的纯棉T恤，舒适透气，适合日常穿搭。',
+    details: [
+      '100%纯棉面料',
+      '舒适透气',
+      '简约设计',
+      '修身版型',
+      '多色可选'
+    ],
+    images: [
+      'https://neeko-copilot.bytedance.net/api/text_to_image?prompt=white%20cotton%20t-shirt%20minimalist%20design%20product%20photo&image_size=portrait_4_3',
+      'https://neeko-copilot.bytedance.net/api/text_to_image?prompt=white%20t-shirt%20side%20view%20product%20photo&image_size=portrait_4_3',
+      'https://neeko-copilot.bytedance.net/api/text_to_image?prompt=white%20t-shirt%20back%20view%20product%20photography&image_size=portrait_4_3',
+      'https://neeko-copilot.bytedance.net/api/text_to_image?prompt=person%20wearing%20white%20t-shirt%20casual%20style%20lifestyle%20photo&image_size=portrait_4_3'
+    ],
+    colors: [
+      { id: 'black', name: 'Black', hex: '#000000' },
+      { id: 'white', name: 'White', hex: '#FFFFFF' },
+      { id: 'navy', name: 'Navy', hex: '#001f3f' }
+    ],
+    sizes: [
+      { id: 's', name: 'S', stock: 20 },
+      { id: 'm', name: 'M', stock: 15 },
+      { id: 'l', name: 'L', stock: 18 },
+      { id: 'xl', name: 'XL', stock: 10 }
+    ]
+  },
+  { 
+    id: 3, 
+    name: '帽子', 
+    price: 59, 
+    originalPrice: 129, 
+    discount: '-55%',
+    description: '经典棒球帽，时尚百搭，适合户外活动。',
+    details: [
+      '优质棉质',
+      '可调帽围',
+      '透气网眼',
+      '刺绣LOGO',
+      '防晒遮阳'
+    ],
+    images: [
+      'https://neeko-copilot.bytedance.net/api/text_to_image?prompt=baseball%20cap%20casual%20style%20product%20photo%20white%20background&image_size=portrait_4_3',
+      'https://neeko-copilot.bytedance.net/api/text_to_image?prompt=baseball%20cap%20side%20view%20product%20photo&image_size=portrait_4_3',
+      'https://neeko-copilot.bytedance.net/api/text_to_image?prompt=baseball%20cap%20back%20view%20product%20photography&image_size=portrait_4_3',
+      'https://neeko-copilot.bytedance.net/api/text_to_image?prompt=person%20wearing%20baseball%20cap%20casual%20style%20lifestyle%20photo&image_size=portrait_4_3'
+    ],
+    colors: [
+      { id: 'black', name: 'Black', hex: '#000000' },
+      { id: 'white', name: 'White', hex: '#FFFFFF' },
+      { id: 'navy', name: 'Navy', hex: '#001f3f' },
+      { id: 'grey', name: 'Grey', hex: '#808080' }
+    ],
+    sizes: [
+      { id: 'one', name: 'One Size', stock: 50 }
+    ]
+  },
+  { 
+    id: 4, 
+    name: '卫衣', 
+    price: 159, 
+    originalPrice: 359, 
+    discount: '-55%',
+    description: '舒适保暖的圆领卫衣，简约时尚，适合春秋季节穿着。',
+    details: [
+      '抓绒内里',
+      '圆领设计',
+      '罗纹袖口',
+      '柔软舒适',
+      '经典版型'
+    ],
+    images: [
+      'https://neeko-copilot.bytedance.net/api/text_to_image?prompt=grey%20crewneck%20sweatshirt%20product%20photo%20white%20background&image_size=portrait_4_3',
+      'https://neeko-copilot.bytedance.net/api/text_to_image?prompt=grey%20sweatshirt%20side%20view%20product%20photo&image_size=portrait_4_3',
+      'https://neeko-copilot.bytedance.net/api/text_to_image?prompt=grey%20sweatshirt%20back%20view%20product%20photography&image_size=portrait_4_3',
+      'https://neeko-copilot.bytedance.net/api/text_to_image?prompt=person%20wearing%20grey%20sweatshirt%20casual%20style%20lifestyle%20photo&image_size=portrait_4_3'
+    ],
+    colors: [
+      { id: 'grey', name: 'Grey', hex: '#808080' },
+      { id: 'black', name: 'Black', hex: '#000000' },
+      { id: 'navy', name: 'Navy', hex: '#001f3f' }
+    ],
+    sizes: [
+      { id: 's', name: 'S', stock: 10 },
+      { id: 'm', name: 'M', stock: 12 },
+      { id: 'l', name: 'L', stock: 8 },
+      { id: 'xl', name: 'XL', stock: 6 }
+    ]
+  },
+  { 
+    id: 5, 
+    name: '长裤', 
+    price: 179, 
+    originalPrice: 369, 
+    discount: '-52%',
+    description: '舒适休闲长裤，经典版型，适合日常穿着。',
+    details: [
+      '棉质混纺',
+      '舒适透气',
+      '直筒版型',
+      '多口袋设计',
+      '百搭款式'
+    ],
+    images: [
+      'https://neeko-copilot.bytedance.net/api/text_to_image?prompt=black%20cotton%20pants%20casual%20style%20product%20photo&image_size=portrait_4_3',
+      'https://neeko-copilot.bytedance.net/api/text_to_image?prompt=black%20pants%20side%20view%20product%20photo&image_size=portrait_4_3',
+      'https://neeko-copilot.bytedance.net/api/text_to_image?prompt=black%20pants%20back%20view%20product%20photography&image_size=portrait_4_3',
+      'https://neeko-copilot.bytedance.net/api/text_to_image?prompt=person%20wearing%20black%20pants%20casual%20style%20lifestyle%20photo&image_size=portrait_4_3'
+    ],
+    colors: [
+      { id: 'black', name: 'Black', hex: '#000000' },
+      { id: 'navy', name: 'Navy', hex: '#001f3f' },
+      { id: 'khaki', name: 'Khaki', hex: '#c3b091' }
+    ],
+    sizes: [
+      { id: 'm', name: 'M', stock: 8 },
+      { id: 'l', name: 'L', stock: 10 },
+      { id: 'xl', name: 'XL', stock: 6 },
+      { id: 'xxl', name: 'XXL', stock: 4 }
+    ]
+  },
+  { 
+    id: 6, 
+    name: '运动裤', 
+    price: 199, 
+    originalPrice: 499, 
+    discount: '-60%',
+    description: '专业运动裤，舒适透气，适合运动休闲穿着。',
+    details: [
+      '速干面料',
+      '弹性腰围',
+      '修身版型',
+      '侧边口袋',
+      '反光细节'
+    ],
+    images: [
+      'https://neeko-copilot.bytedance.net/api/text_to_image?prompt=sport%20jogger%20pants%20athletic%20wear%20product%20photo&image_size=portrait_4_3',
+      'https://neeko-copilot.bytedance.net/api/text_to_image?prompt=sport%20pants%20side%20view%20product%20photo&image_size=portrait_4_3',
+      'https://neeko-copilot.bytedance.net/api/text_to_image?prompt=sport%20pants%20back%20view%20product%20photography&image_size=portrait_4_3',
+      'https://neeko-copilot.bytedance.net/api/text_to_image?prompt=person%20wearing%20sport%20pants%20athletic%20style%20lifestyle%20photo&image_size=portrait_4_3'
+    ],
+    colors: [
+      { id: 'black', name: 'Black', hex: '#000000' },
+      { id: 'grey', name: 'Grey', hex: '#808080' },
+      { id: 'navy', name: 'Navy', hex: '#001f3f' }
+    ],
+    sizes: [
+      { id: 's', name: 'S', stock: 6 },
+      { id: 'm', name: 'M', stock: 8 },
+      { id: 'l', name: 'L', stock: 10 },
+      { id: 'xl', name: 'XL', stock: 5 }
+    ]
+  },
+  { 
+    id: 7, 
+    name: '棒球帽', 
+    price: 69, 
+    originalPrice: 149, 
+    discount: '-54%',
+    description: '时尚棒球帽，经典设计，适合各种场合。',
+    details: [
+      '棉质面料',
+      '可调金属扣',
+      '正面刺绣',
+      '透气舒适',
+      '防晒遮阳'
+    ],
+    images: [
+      'https://neeko-copilot.bytedance.net/api/text_to_image?prompt=baseball%20cap%20with%20logo%20product%20photo%20white%20background&image_size=portrait_4_3',
+      'https://neeko-copilot.bytedance.net/api/text_to_image?prompt=baseball%20cap%20with%20logo%20side%20view%20product%20photo&image_size=portrait_4_3',
+      'https://neeko-copilot.bytedance.net/api/text_to_image?prompt=baseball%20cap%20with%20logo%20back%20view%20product%20photography&image_size=portrait_4_3',
+      'https://neeko-copilot.bytedance.net/api/text_to_image?prompt=person%20wearing%20baseball%20cap%20with%20logo%20lifestyle%20photo&image_size=portrait_4_3'
+    ],
+    colors: [
+      { id: 'black', name: 'Black', hex: '#000000' },
+      { id: 'white', name: 'White', hex: '#FFFFFF' },
+      { id: 'red', name: 'Red', hex: '#ff0000' },
+      { id: 'blue', name: 'Blue', hex: '#0066cc' }
+    ],
+    sizes: [
+      { id: 'one', name: 'One Size', stock: 30 }
+    ]
+  },
+  { 
+    id: 8, 
+    name: '帆布包', 
+    price: 49, 
+    originalPrice: 99, 
+    discount: '-51%',
+    description: '环保帆布包，大容量设计，适合日常使用。',
+    details: [
+      '100%帆布',
+      '大容量空间',
+      '内袋设计',
+      '耐用把手',
+      '印花图案'
+    ],
+    images: [
+      'https://neeko-copilot.bytedance.net/api/text_to_image?prompt=canvas%20tote%20bag%20minimalist%20design%20product%20photo&image_size=portrait_4_3',
+      'https://neeko-copilot.bytedance.net/api/text_to_image?prompt=canvas%20tote%20bag%20side%20view%20product%20photo&image_size=portrait_4_3',
+      'https://neeko-copilot.bytedance.net/api/text_to_image?prompt=canvas%20tote%20bag%20back%20view%20product%20photography&image_size=portrait_4_3',
+      'https://neeko-copilot.bytedance.net/api/text_to_image?prompt=person%20carrying%20canvas%20tote%20bag%20lifestyle%20photo&image_size=portrait_4_3'
+    ],
+    colors: [
+      { id: 'natural', name: 'Natural', hex: '#f5f5dc' },
+      { id: 'black', name: 'Black', hex: '#000000' },
+      { id: 'navy', name: 'Navy', hex: '#001f3f' }
+    ],
+    sizes: [
+      { id: 'one', name: 'One Size', stock: 25 }
+    ]
+  }
+]
+
+// 根据ID获取商品
+const getProductById = (id) => {
+  return productsDB.find(p => p.id === parseInt(id)) || productsDB[0]
+}
+
+// 当前商品数据
+const product = ref(productsDB[0])
+
+onMounted(() => {
+  const productId = route.params.id
+  if (productId) {
+    product.value = getProductById(productId)
+  }
 })
 
 // 选中的规格

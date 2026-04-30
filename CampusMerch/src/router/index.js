@@ -35,7 +35,7 @@ const router = createRouter({
           component: PersonCenter,
         },
         {
-          path: 'productdetails',
+          path: 'productdetails/:id',
           name: 'ProductDetails',
           component: ProductDetails,
         },
