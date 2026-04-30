@@ -22,7 +22,7 @@ const handleLogoutClick = () => {
     <!-- 顶部导航栏 -->
     <div class="top-header">
       <div class="header-content">
-        <router-link to="/" class="logo">校园物料</router-link>
+        <router-link to="/" class="logo">校园文创预定</router-link>
         <div class="search-bar">
           <input type="text" placeholder="产品搜索">
           <button class="search-btn">🔍</button>
@@ -86,20 +86,20 @@ const handleLogoutClick = () => {
 /* 顶部导航栏 */
 .top-header {
   border-bottom: 1px solid #e0e0e0;
-  padding: 10px 0;
+  padding: 15px 0;
 }
 
 .header-content {
-  max-width: 1200px;
+  max-width: 1100px;
   margin: 0 auto;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0 20px;
+  padding: 0 30px;
 }
 
 .logo {
-  font-size: 24px;
+  font-size: 32px;
   font-weight: bold;
   color: #ffcc00;
   text-transform: uppercase;
@@ -110,30 +110,31 @@ const handleLogoutClick = () => {
   display: flex;
   align-items: center;
   flex: 1;
-  max-width: 400px;
-  margin: 0 20px;
+  max-width: 500px;
+  margin: 0 30px;
 }
 
 .search-bar input {
   width: 100%;
-  padding: 8px 12px;
+  padding: 12px 15px;
   border: 1px solid #ddd;
   border-radius: 4px 0 0 4px;
-  font-size: 14px;
+  font-size: 16px;
 }
 
 .search-btn {
-  padding: 8px 15px;
+  padding: 12px 20px;
   background-color: #ffcc00;
   border: none;
   border-radius: 0 4px 4px 0;
   cursor: pointer;
+  font-size: 18px;
 }
 
 .user-actions {
   display: flex;
   align-items: center;
-  gap: 20px;
+  gap: 25px;
   position: relative;
 }
 
@@ -144,8 +145,8 @@ const handleLogoutClick = () => {
 }
 
 .user-icon {
-  width: 36px;
-  height: 36px;
+  width: 48px;
+  height: 48px;
   transition: transform 0.3s;
 }
 
@@ -154,17 +155,17 @@ const handleLogoutClick = () => {
 }
 
 .user-avatar {
-  width: 36px;
-  height: 36px;
+  width: 48px;
+  height: 48px;
   border-radius: 50%;
   object-fit: cover;
-  border: 2px solid #ffcc00;
+  border: 3px solid #ffcc00;
   transition: transform 0.3s, box-shadow 0.3s;
 }
 
 .user-avatar:hover {
   transform: scale(1.1);
-  box-shadow: 0 0 8px rgba(255, 204, 0, 0.5);
+  box-shadow: 0 0 10px rgba(255, 204, 0, 0.5);
 }
 
 /* 头像下拉菜单 */
@@ -218,7 +219,7 @@ const handleLogoutClick = () => {
 }
 
 .cart {
-  font-size: 20px;
+  font-size: 26px;
   cursor: pointer;
   transition: transform 0.3s;
 }
@@ -233,23 +234,23 @@ const handleLogoutClick = () => {
 }
 
 .nav-content {
-  max-width: 1200px;
+  max-width: 1100px;
   margin: 0 auto;
   display: flex;
   justify-content: center;
-  gap: 30px;
-  padding: 15px 20px;
+  gap: 45px;
+  padding: 20px 30px;
 }
 
 .nav-item {
   text-decoration: none;
   color: #333;
-  font-size: 14px;
+  font-size: 18px;
   font-weight: 500;
   transition: color 0.3s;
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
 }
 
 .nav-item:hover, .nav-item.active {

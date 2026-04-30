@@ -12,7 +12,7 @@
     
     <div class="header-content">
       <div class="header-left">
-        <h1 class="logo">校园物料</h1>
+        <h1 class="logo">校园文创预定</h1>
         <span class="subtitle">管理后台</span>
       </div>
     </div>

@@ -1,9 +1,11 @@
 <script setup>
 import { ref, watch } from 'vue'
+import { useRouter } from 'vue-router'
 import { useUserStore } from '../../stores/user'
 import Header from '../../components/headerUser.vue'
 
 const userStore = useUserStore()
+const router = useRouter()
 
 // 用户表单数据
 const loginForm = ref({
@@ -15,6 +17,12 @@ const loginForm = ref({
 const handleLogin = () => {
   userStore.login(loginForm.value.username, loginForm.value.password)
   loginForm.value = { username: '', password: '' }
+}
+
+// 跳转到注册页面
+const goToRegister = () => {
+  userStore.closeLoginModal()
+  router.push('/register')
 }
 
 // 点击外部关闭头像菜单
@@ -79,7 +87,7 @@ if (typeof window !== 'undefined') {
             </div>
             <button type="submit" class="login-btn">登录</button>
             <div class="register-link">
-              <span>还没有账号? <a href="#">立即注册</a></span>
+              <span>还没有账号? <a href="#" @click.prevent="goToRegister">立即注册</a></span>
             </div>
           </form>
         </div>
@@ -115,7 +123,7 @@ if (typeof window !== 'undefined') {
 /* 主内容区 */
 .main-content {
   flex: 1;
-  padding-top: 120px; /* 为固定导航栏留出空间 */
+  padding-top: 160px; /* 为固定导航栏留出空间，增大间距 */
 }
 
 /* 登录弹窗样式 */

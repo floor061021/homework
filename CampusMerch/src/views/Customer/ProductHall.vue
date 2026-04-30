@@ -1,4 +1,34 @@
 <script setup>
+import { ref, onMounted, onUnmounted } from 'vue'
+
+// 滚动到热门商品区域
+const scrollToProducts = () => {
+  const element = document.getElementById('product-section')
+  if (element) {
+    element.scrollIntoView({ behavior: 'smooth' })
+  }
+}
+
+// 返回顶部按钮显示状态
+const showBackTop = ref(false)
+
+// 滚动到顶部
+const scrollToTop = () => {
+  window.scrollTo({ top: 0, behavior: 'smooth' })
+}
+
+// 监听滚动事件
+const handleScroll = () => {
+  showBackTop.value = window.scrollY > 300
+}
+
+onMounted(() => {
+  window.addEventListener('scroll', handleScroll)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('scroll', handleScroll)
+})
 </script>
 
 <template>
@@ -7,17 +37,17 @@
     <section class="hero-banner">
       <div class="banner-content">
         <div class="banner-text">
-          <h1>校园物料</h1>
+          <h1>校园文创预定</h1>
           <h2>Campus Merch</h2>
         </div>
         <div class="banner-cta">
-          <button class="shop-now-btn">立即购买</button>
+          <button class="shop-now-btn" @click="scrollToProducts">立即购买</button>
         </div>
       </div>
     </section>
     
     <!-- 产品展示区 -->
-    <section class="product-section">
+    <section id="product-section" class="product-section">
       <h2 class="section-title">热门商品</h2>
       <div class="product-grid">
         <div class="product-card">
@@ -86,6 +116,14 @@
         </div>
       </div>
     </section>
+
+    <!-- 返回顶部按钮 -->
+    <button class="back-to-top" @click="scrollToTop" v-show="showBackTop">↑</button>
+    
+    <!-- 版权标识 -->
+    <footer class="page-footer">
+      <p>校园文创预订 © 2026</p>
+    </footer>
   </div>
 </template>
 
@@ -233,6 +271,47 @@
   font-size: 14px;
   color: #999;
   text-decoration: line-through;
+}
+
+/* 返回顶部按钮 */
+.back-to-top {
+  position: fixed;
+  bottom: 30px;
+  right: 30px;
+  width: 50px;
+  height: 50px;
+  background-color: #ffcc00;
+  color: #fff;
+  border: none;
+  border-radius: 50%;
+  font-size: 24px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  transition: all 0.3s;
+  z-index: 100;
+}
+
+.back-to-top:hover {
+  background-color: #e6b800;
+  transform: translateY(-3px);
+}
+
+/* 版权标识 */
+.page-footer {
+  text-align: center;
+  padding: 40px 20px;
+  background-color: #f5f5f5;
+  border-top: 1px solid #e0e0e0;
+  margin-top: 60px;
+}
+
+.page-footer p {
+  margin: 0;
+  font-size: 14px;
+  color: #999;
 }
 
 /* 响应式设计 */

@@ -4,6 +4,30 @@ import { ref } from 'vue'
 // 当前模式：'register' 或 'forgetPassword'
 const currentMode = ref('register')
 
+// 弹窗显示状态
+const showUserAgreement = ref(false)
+const showPrivacyPolicy = ref(false)
+
+// 打开用户协议弹窗
+const openUserAgreement = () => {
+  showUserAgreement.value = true
+}
+
+// 关闭用户协议弹窗
+const closeUserAgreement = () => {
+  showUserAgreement.value = false
+}
+
+// 打开隐私政策弹窗
+const openPrivacyPolicy = () => {
+  showPrivacyPolicy.value = true
+}
+
+// 关闭隐私政策弹窗
+const closePrivacyPolicy = () => {
+  showPrivacyPolicy.value = false
+}
+
 // 注册表单
 const registerForm = ref({
   username: '',
@@ -21,20 +45,46 @@ const forgetPasswordForm = ref({
   confirmPassword: ''
 })
 
+// 验证码倒计时状态
+const registerCodeCountdown = ref(0)
+const forgetCodeCountdown = ref(0)
+
+// 获取注册验证码
 const getRegisterCode = () => {
   if (!registerForm.value.phone) {
     alert('请先输入邮箱账号')
     return
   }
+  if (registerCodeCountdown.value > 0) {
+    return
+  }
   alert('验证码已发送')
+  registerCodeCountdown.value = 60
+  const timer = setInterval(() => {
+    registerCodeCountdown.value--
+    if (registerCodeCountdown.value <= 0) {
+      clearInterval(timer)
+    }
+  }, 1000)
 }
 
+// 获取忘记密码验证码
 const getForgetCode = () => {
   if (!forgetPasswordForm.value.email) {
     alert('请先输入邮箱账号')
     return
   }
+  if (forgetCodeCountdown.value > 0) {
+    return
+  }
   alert('验证码已发送')
+  forgetCodeCountdown.value = 60
+  const timer = setInterval(() => {
+    forgetCodeCountdown.value--
+    if (forgetCodeCountdown.value <= 0) {
+      clearInterval(timer)
+    }
+  }, 1000)
 }
 
 const handleRegister = () => {
@@ -185,15 +235,22 @@ const goToRegister = () => {
                   placeholder="请输入验证码"
                   class="form-input code-input"
                 />
-                <button class="code-btn" @click="getRegisterCode">获取验证码</button>
+                <button 
+              class="code-btn" 
+              :class="{ disabled: registerCodeCountdown > 0 }"
+              @click="getRegisterCode"
+              :disabled="registerCodeCountdown > 0"
+            >
+              {{ registerCodeCountdown > 0 ? `${registerCodeCountdown}s` : '获取验证码' }}
+            </button>
               </div>
               <div class="form-item form-item-agree">
                 <input type="checkbox" id="agree" class="agree-checkbox" />
                 <label for="agree" class="agree-label">
                   我已阅读并同意
-                  <a href="#" class="link">《用户协议》</a>
+                  <a href="#" class="link" @click.prevent="openUserAgreement">《用户协议》</a>
                   和
-                  <a href="#" class="link">《隐私政策》</a>
+                  <a href="#" class="link" @click.prevent="openPrivacyPolicy">《隐私政策》</a>
                 </label>
               </div>
               <button class="register-btn" @click="handleRegister">注册</button>
@@ -224,7 +281,14 @@ const goToRegister = () => {
                   placeholder="请输入验证码"
                   class="form-input code-input"
                 />
-                <button class="code-btn" @click="getForgetCode">获取验证码</button>
+                <button 
+              class="code-btn" 
+              :class="{ disabled: forgetCodeCountdown > 0 }"
+              @click="getForgetCode"
+              :disabled="forgetCodeCountdown > 0"
+            >
+              {{ forgetCodeCountdown > 0 ? `${forgetCodeCountdown}s` : '获取验证码' }}
+            </button>
               </div>
               <div class="form-item">
                 <input 
@@ -250,10 +314,93 @@ const goToRegister = () => {
           </div>
         </div>
       </div>
-      <div class="footer">
-        <p>校园文创预订 © 2026</p>
+    </div>
+
+    <!-- 用户协议弹窗 -->
+    <div v-if="showUserAgreement" class="modal-overlay" @click.self="closeUserAgreement">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>用户协议</h2>
+          <button class="modal-close" @click="closeUserAgreement">×</button>
+        </div>
+        <div class="modal-body">
+          <h3>一、用户服务协议</h3>
+          <p>欢迎您注册并使用校园文创预订平台（以下简称"本平台"）。本协议是您与本平台之间关于使用本平台服务的法律协议。</p>
+          
+          <h3>二、用户注册</h3>
+          <p>1. 您必须年满18周岁才能注册成为本平台用户。</p>
+          <p>2. 您需要提供真实、准确的注册信息。</p>
+          <p>3. 您负责保管自己的账号和密码，并对其下的所有活动负责。</p>
+          
+          <h3>三、用户权利与义务</h3>
+          <p>1. 用户有权使用本平台提供的各项服务。</p>
+          <p>2. 用户应遵守本平台的各项规则和国家法律法规。</p>
+          <p>3. 用户不得利用本平台从事违法违规活动。</p>
+          
+          <h3>四、服务内容</h3>
+          <p>本平台提供校园文创产品的浏览、购买、定制等服务。</p>
+          
+          <h3>五、协议变更</h3>
+          <p>本平台有权随时修改本协议，修改后的协议将在平台公告后生效。</p>
+          
+          <h3>六、其他</h3>
+          <p>本协议的解释权归本平台所有。如有争议，双方应协商解决；协商不成的，可向有管辖权的法院提起诉讼。</p>
+        </div>
+        <div class="modal-footer">
+          <button class="modal-btn" @click="closeUserAgreement">我已阅读</button>
+        </div>
       </div>
     </div>
+
+    <!-- 隐私政策弹窗 -->
+    <div v-if="showPrivacyPolicy" class="modal-overlay" @click.self="closePrivacyPolicy">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>隐私政策</h2>
+          <button class="modal-close" @click="closePrivacyPolicy">×</button>
+        </div>
+        <div class="modal-body">
+          <h3>一、隐私政策概述</h3>
+          <p>本隐私政策旨在说明本平台如何收集、使用、存储和保护您的个人信息。</p>
+          
+          <h3>二、信息收集</h3>
+          <p>1. 注册信息：包括用户名、密码、邮箱等。</p>
+          <p>2. 使用信息：包括浏览记录、购买记录、偏好设置等。</p>
+          <p>3. 设备信息：包括IP地址、浏览器类型、设备型号等。</p>
+          
+          <h3>三、信息使用</h3>
+          <p>1. 提供和优化服务。</p>
+          <p>2. 个性化推荐。</p>
+          <p>3. 安全保障。</p>
+          <p>4. 合规要求。</p>
+          
+          <h3>四、信息保护</h3>
+          <p>1. 采用加密技术保护数据传输。</p>
+          <p>2. 限制访问权限。</p>
+          <p>3. 定期安全审计。</p>
+          
+          <h3>五、信息共享</h3>
+          <p>1. 不会向第三方出售您的个人信息。</p>
+          <p>2. 在法律要求或用户同意的情况下可能披露信息。</p>
+          
+          <h3>六、用户权利</h3>
+          <p>1. 访问和更正个人信息。</p>
+          <p>2. 删除个人信息。</p>
+          <p>3. 撤回同意。</p>
+          
+          <h3>七、政策变更</h3>
+          <p>本政策可能不定期更新，更新后将在平台公告。</p>
+        </div>
+        <div class="modal-footer">
+          <button class="modal-btn" @click="closePrivacyPolicy">我已阅读</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 版权标识 -->
+    <footer class="page-footer">
+      <p>校园文创预订 © 2026</p>
+    </footer>
   </div>
 </template>
 
@@ -282,14 +429,14 @@ const goToRegister = () => {
 .logo-bg {
   width: 54px;
   height: 54px;
-  background: linear-gradient(180deg, #e74c3c 0%, #c0392b 100%);
+  background: linear-gradient(180deg, #ffcc00 0%, #e6b800 100%);
   border-radius: 8px;
 }
 
 .logo-title {
   font-size: 32px;
   font-weight: bold;
-  color: #e74c3c;
+  color: #ffcc00;
   letter-spacing: 2px;
 }
 
@@ -325,7 +472,7 @@ const goToRegister = () => {
 /* 左侧品牌区域 */
 .brand-section {
   width: 40%;
-  background: linear-gradient(180deg, #e74c3c 0%, #c0392b 100%);
+  background: linear-gradient(180deg, #ffcc00 0%, #e6b800 100%);
   padding: 60px 40px;
   color: #fff;
   display: flex;
@@ -346,7 +493,7 @@ const goToRegister = () => {
 .logo-icon {
   width: 50px;
   height: 50px;
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 204, 0, 0.2);
   border-radius: 10px;
   display: flex;
   align-items: center;
@@ -357,6 +504,7 @@ const goToRegister = () => {
   content: '文';
   font-size: 28px;
   font-weight: bold;
+  color: #fff;
 }
 
 .logo-text {
@@ -390,12 +538,13 @@ const goToRegister = () => {
 .feature-icon {
   width: 24px;
   height: 24px;
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 204, 0, 0.2);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 14px;
+  color: #fff;
 }
 
 /* 右侧注册区域 */
@@ -439,7 +588,7 @@ const goToRegister = () => {
 
 .form-input:focus {
   outline: none;
-  border-color: #e74c3c;
+  border-color: #ffcc00;
 }
 
 .form-input::placeholder {
@@ -471,6 +620,16 @@ const goToRegister = () => {
   background: #e8e8e8;
 }
 
+.code-btn.disabled {
+  background: #d0d0d0;
+  color: #999;
+  cursor: not-allowed;
+}
+
+.code-btn.disabled:hover {
+  background: #d0d0d0;
+}
+
 .form-item-agree {
   flex-direction: row;
   align-items: center;
@@ -489,7 +648,7 @@ const goToRegister = () => {
 }
 
 .link {
-  color: #e74c3c;
+  color: #ffcc00;
   text-decoration: none;
 }
 
@@ -500,7 +659,7 @@ const goToRegister = () => {
 .register-btn {
   width: 100%;
   height: 45px;
-  background: linear-gradient(180deg, #e74c3c 0%, #c0392b 100%);
+  background: linear-gradient(180deg, #ffcc00 0%, #e6b800 100%);
   border: none;
   border-radius: 6px;
   color: #fff;
@@ -527,15 +686,142 @@ const goToRegister = () => {
   margin-left: 5px;
 }
 
-.footer {
-  margin-top: 70px;
+.page-footer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  width: 100%;
   text-align: center;
-  color: #999;
-  font-size: 12px;
+  padding: 20px;
+  background-color: #f5f5f5;
+  border-top: 1px solid #e0e0e0;
+  z-index: 10;
 }
 
-.footer p {
+.page-footer p {
   margin: 0;
+  font-size: 14px;
+  color: #999;
+}
+
+/* 弹窗样式 */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.modal-content {
+  background-color: white;
+  border-radius: 12px;
+  width: 100%;
+  max-width: 600px;
+  max-height: 80vh;
+  overflow: hidden;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 25px;
+  border-bottom: 1px solid #e0e0e0;
+  background-color: #f8f8f8;
+}
+
+.modal-header h2 {
+  margin: 0;
+  font-size: 20px;
+  color: #333;
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  font-size: 28px;
+  color: #999;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+  transition: color 0.3s;
+}
+
+.modal-close:hover {
+  color: #333;
+}
+
+.modal-body {
+  padding: 25px;
+  max-height: 50vh;
+  overflow-y: auto;
+}
+
+.modal-body h3 {
+  font-size: 16px;
+  color: #333;
+  margin: 15px 0 10px 0;
+}
+
+.modal-body h3:first-child {
+  margin-top: 0;
+}
+
+.modal-body p {
+  font-size: 14px;
+  color: #666;
+  line-height: 1.6;
+  margin: 5px 0;
+}
+
+.modal-footer {
+  padding: 15px 25px;
+  border-top: 1px solid #e0e0e0;
+  background-color: #fafafa;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.modal-btn {
+  padding: 10px 30px;
+  background-color: #ffcc00;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.modal-btn:hover {
+  background-color: #e6b800;
 }
 
 @media (max-width: 768px) {
