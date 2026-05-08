@@ -1,6 +1,7 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useUserStore } from '../../stores/user'
+import { products, getCategoryOptions } from '../../data/products.js'
 
 const userStore = useUserStore()
 
@@ -39,14 +40,8 @@ onUnmounted(() => {
   window.removeEventListener('scroll', handleScroll)
 })
 
-// 分类选项
-const categories = [
-  { value: 'all', label: '全部' },
-  { value: 'top', label: '上衣' },
-  { value: 'pants', label: '裤子' },
-  { value: 'hat', label: '帽子' },
-  { value: 'other', label: '其他' }
-]
+// 分类选项（从共享数据获取）
+const categories = computed(() => getCategoryOptions())
 
 // 当前选中的分类
 const activeCategory = ref('all')
@@ -73,21 +68,9 @@ watch(() => userStore.searchKeyword, (newKeyword) => {
   }
 }, { immediate: true })
 
-// 商品数据（带分类和图片）
-const products = ref([
-  { id: 1, name: '连帽衫', price: 199, originalPrice: 399, discount: -48, category: 'top', image: 'https://neeko-copilot.bytedance.net/api/text_to_image?prompt=black%20hoodie%20with%20colorful%20doodle%20design%20product%20photo%20white%20background&image_size=square' },
-  { id: 2, name: 'T恤', price: 99, originalPrice: 249, discount: -60, category: 'top', image: 'https://neeko-copilot.bytedance.net/api/text_to_image?prompt=white%20cotton%20t-shirt%20minimalist%20design%20product%20photo&image_size=square' },
-  { id: 3, name: '帽子', price: 59, originalPrice: 129, discount: -55, category: 'hat', image: 'https://neeko-copilot.bytedance.net/api/text_to_image?prompt=baseball%20cap%20casual%20style%20product%20photo%20white%20background&image_size=square' },
-  { id: 4, name: '卫衣', price: 159, originalPrice: 359, discount: -55, category: 'top', image: 'https://neeko-copilot.bytedance.net/api/text_to_image?prompt=grey%20crewneck%20sweatshirt%20product%20photo%20white%20background&image_size=square' },
-  { id: 5, name: '长裤', price: 179, originalPrice: 369, discount: -52, category: 'pants', image: 'https://neeko-copilot.bytedance.net/api/text_to_image?prompt=black%20cotton%20pants%20casual%20style%20product%20photo&image_size=square' },
-  { id: 6, name: '运动裤', price: 199, originalPrice: 499, discount: -60, category: 'pants', image: 'https://neeko-copilot.bytedance.net/api/text_to_image?prompt=sport%20jogger%20pants%20athletic%20wear%20product%20photo&image_size=square' },
-  { id: 7, name: '棒球帽', price: 69, originalPrice: 149, discount: -54, category: 'hat', image: 'https://neeko-copilot.bytedance.net/api/text_to_image?prompt=baseball%20cap%20with%20logo%20product%20photo%20white%20background&image_size=square' },
-  { id: 8, name: '帆布包', price: 49, originalPrice: 99, discount: -51, category: 'other', image: 'https://neeko-copilot.bytedance.net/api/text_to_image?prompt=canvas%20tote%20bag%20minimalist%20design%20product%20photo&image_size=square' }
-])
-
-// 过滤后的商品列表
+// 过滤后的商品列表（仅显示上架商品）
 const filteredProducts = computed(() => {
-  let result = products.value
+  let result = products.value.filter(p => p.status === 'active')
   
   // 先按分类过滤
   if (activeCategory.value !== 'all') {

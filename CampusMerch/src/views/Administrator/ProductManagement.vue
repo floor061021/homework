@@ -1,5 +1,6 @@
 <script setup>
 import { ref, computed } from 'vue'
+import { products, updateProductStatus, deleteProduct, addProduct, categories, getCategoryOptions, productStatuses, getProductStatusOptions, addCategory, addProductStatus } from '@/data/products.js'
 
 // 当前激活的标签页
 const activeTab = ref('products')
@@ -7,13 +8,8 @@ const activeTab = ref('products')
 // 当前选中的订单类型（普通订单/定制订单）
 const orderType = ref('normal')
 
-// 商品状态选项
-const productStatusOptions = [
-  { value: 'all', label: '全部' },
-  { value: 'draft', label: '草稿' },
-  { value: 'active', label: '上架' },
-  { value: 'inactive', label: '下架' }
-]
+// 商品状态选项（从共享数据获取）
+const productStatusOptions = computed(() => getProductStatusOptions())
 
 // 订单状态选项
 const orderStatusOptions = [
@@ -37,60 +33,17 @@ const customOrderStatusOptions = [
 // 当前选中的商品状态
 const productStatus = ref('all')
 
+// 当前选中的商品分类
+const selectedCategory = ref('all')
+
+// 分类选项（从共享数据获取）
+const categoryOptionsNew = computed(() => getCategoryOptions())
+
 // 当前选中的订单状态
 const orderStatus = ref('all')
 
 // 当前选中的定制订单状态
 const customOrderStatus = ref('all')
-
-// 商品列表数据
-const products = ref([
-  {
-    id: 'P001',
-    name: '连帽衫',
-    price: 199,
-    stock: 100,
-    status: 'active',
-    category: '卫衣',
-    createTime: '2024-01-10'
-  },
-  {
-    id: 'P002',
-    name: 'T恤',
-    price: 99,
-    stock: 200,
-    status: 'active',
-    category: '上衣',
-    createTime: '2024-01-11'
-  },
-  {
-    id: 'P003',
-    name: '帽子',
-    price: 59,
-    stock: 50,
-    status: 'inactive',
-    category: '配饰',
-    createTime: '2024-01-12'
-  },
-  {
-    id: 'P004',
-    name: '卫衣',
-    price: 159,
-    stock: 80,
-    status: 'active',
-    category: '卫衣',
-    createTime: '2024-01-13'
-  },
-  {
-    id: 'P005',
-    name: '裤子',
-    price: 129,
-    stock: 0,
-    status: 'draft',
-    category: '下装',
-    createTime: '2024-01-14'
-  }
-])
 
 // 订单列表数据
 const orders = ref([
@@ -188,10 +141,25 @@ const customOrders = ref([
 
 // 过滤后的商品列表
 const filteredProducts = computed(() => {
+  let result = products.value
+  
+  // 状态过滤
   if (productStatus.value === 'all') {
-    return products.value
+    // "全部"状态不显示已下架商品，下架商品只能在"下架"状态中查看
+    result = result.filter(p => p.status !== 'inactive')
+  } else if (productStatus.value === 'inactive') {
+    // "下架"状态只显示已下架商品
+    result = result.filter(p => p.status === 'inactive')
+  } else {
+    result = result.filter(p => p.status === productStatus.value)
   }
-  return products.value.filter(p => p.status === productStatus.value)
+  
+  // 分类过滤
+  if (selectedCategory.value !== 'all') {
+    result = result.filter(p => p.category === selectedCategory.value)
+  }
+  
+  return result
 })
 
 // 过滤后的订单列表
@@ -305,30 +273,54 @@ const customOrderStateMachine = {
 // 操作商品
 const handleProductAction = (action, product) => {
   const currentState = product.status
-  const machine = productStateMachine[currentState]
   
-  if (!machine || !machine.transitions[action]) {
-    alert(`无法执行此操作: ${action}`)
-    return
-  }
-
   switch (action) {
     case 'edit':
       alert(`编辑商品: ${product.name}`)
       break
     case 'toggle':
-      const targetState = currentState === 'active' ? 'inactive' : 'active'
-      product.status = targetState
-      alert(`${product.name} 已${targetState === 'active' ? '上架' : '下架'}`)
-      break
-    case 'delete':
-      if (confirm(`确定删除商品 ${product.name}?`)) {
-        const index = products.value.findIndex(p => p.id === product.id)
-        if (index > -1) {
-          products.value.splice(index, 1)
-        }
+      // 上架/下架操作：草稿状态可以直接上架，上架状态可以下架，下架状态可以重新上架
+      if (currentState === 'draft' || currentState === 'active' || currentState === 'inactive') {
+        const targetState = currentState === 'active' ? 'inactive' : 'active'
+        const actionText = currentState === 'active' ? '下架' : '上架'
+        
+        // 使用自定义弹窗
+        openConfirmModal(
+          `${actionText}确认`,
+          `确定要${actionText}商品 "${product.name}" 吗？`,
+          () => {
+            // 确认回调：更新商品状态
+            updateProductStatus(product.id, targetState)
+            alert(`商品 "${product.name}" 已${actionText}！`)
+          },
+          'toggle',
+          product
+        )
+      } else {
+        alert(`无法执行此操作: ${action}`)
       }
       break
+    case 'delete':
+      // 使用自定义弹窗
+      openConfirmModal(
+        '删除确认',
+        `确定要删除商品 "${product.name}" 吗？此操作不可恢复。`,
+        () => {
+          // 确认回调：删除商品
+          deleteProduct(product.id)
+          alert(`商品 "${product.name}" 已删除！`)
+        },
+        'delete',
+        product
+      )
+      break
+    default:
+      // 其他操作使用状态机检查
+      const machine = productStateMachine[currentState]
+      if (!machine || !machine.transitions[action]) {
+        alert(`无法执行此操作: ${action}`)
+        return
+      }
   }
 }
 
@@ -455,6 +447,36 @@ const closeProgressModal = () => {
   currentOrderProgress.value = null
 }
 
+// 确认弹窗状态
+const showConfirmModal = ref(false)
+const confirmModalTitle = ref('')
+const confirmModalMessage = ref('')
+const confirmModalCallback = ref(null)
+const confirmModalType = ref('') // 'toggle', 'delete'
+const confirmModalProduct = ref(null)
+
+const openConfirmModal = (title, message, callback, type, product = null) => {
+  confirmModalTitle.value = title
+  confirmModalMessage.value = message
+  confirmModalCallback.value = callback
+  confirmModalType.value = type
+  confirmModalProduct.value = product
+  showConfirmModal.value = true
+}
+
+const closeConfirmModal = () => {
+  showConfirmModal.value = false
+  confirmModalCallback.value = null
+  confirmModalProduct.value = null
+}
+
+const handleConfirm = () => {
+  if (confirmModalCallback.value) {
+    confirmModalCallback.value()
+  }
+  closeConfirmModal()
+}
+
 // 商品添加弹窗
 const showAddProductModal = ref(false)
 
@@ -465,6 +487,62 @@ const openAddProductModal = () => {
 const closeAddProductModal = () => {
   showAddProductModal.value = false
   resetProductForm()
+}
+
+// 添加状态弹窗
+const showAddStatusModal = ref(false)
+const newStatus = ref({ value: '', label: '' })
+
+const openAddStatusModal = () => {
+  showAddStatusModal.value = true
+  newStatus.value = { value: '', label: '' }
+}
+
+const closeAddStatusModal = () => {
+  showAddStatusModal.value = false
+  newStatus.value = { value: '', label: '' }
+}
+
+const confirmAddStatus = () => {
+  if (!newStatus.value.value || !newStatus.value.label) {
+    alert('请输入状态值和状态标签')
+    return
+  }
+  const success = addProductStatus(newStatus.value.value, newStatus.value.label)
+  if (success) {
+    alert('状态添加成功')
+    closeAddStatusModal()
+  } else {
+    alert('状态已存在或格式错误')
+  }
+}
+
+// 添加分类弹窗
+const showAddCategoryModal = ref(false)
+const newCategoryName = ref('')
+
+const openAddCategoryModal = () => {
+  showAddCategoryModal.value = true
+  newCategoryName.value = ''
+}
+
+const closeAddCategoryModal = () => {
+  showAddCategoryModal.value = false
+  newCategoryName.value = ''
+}
+
+const confirmAddCategory = () => {
+  if (!newCategoryName.value.trim()) {
+    alert('请输入分类名称')
+    return
+  }
+  const success = addCategory(newCategoryName.value.trim())
+  if (success) {
+    alert('分类添加成功')
+    closeAddCategoryModal()
+  } else {
+    alert('分类已存在')
+  }
 }
 
 // 商品表单数据
@@ -480,16 +558,8 @@ const newProduct = ref({
   status: 'draft'
 })
 
-// 分类选项
-const categoryOptions = [
-  { value: '文化衫', label: '文化衫' },
-  { value: '卫衣', label: '卫衣' },
-  { value: 'T恤', label: 'T恤' },
-  { value: '帽子', label: '帽子' },
-  { value: '帆布包', label: '帆布包' },
-  { value: '文具', label: '文具' },
-  { value: '饰品', label: '饰品' }
-]
+// 分类选项（从共享数据获取，不包含"全部"）
+const categoryOptions = computed(() => categories.value.map(c => ({ value: c, label: c })))
 
 // 重置表单
 const resetProductForm = () => {
@@ -526,17 +596,16 @@ const submitProduct = () => {
   }
 
   const product = {
-    id: 'P' + String(products.value.length + 1).padStart(3, '0'),
     name: newProduct.value.name,
-    code: newProduct.value.code || 'AUTO' + Date.now(),
     price: parseFloat(newProduct.value.price),
     stock: parseInt(newProduct.value.stock),
     status: newProduct.value.status,
     category: newProduct.value.category,
-    createTime: new Date().toISOString().split('T')[0]
+    originalPrice: parseFloat(newProduct.value.price),
+    discount: 0
   }
 
-  products.value.unshift(product)
+  addProduct(product)
   alert(`商品 "${product.name}" 添加成功！`)
   closeAddProductModal()
 }
@@ -555,6 +624,7 @@ const submitProduct = () => {
           
           <!-- 状态筛选 -->
           <div class="filter-bar">
+            <span class="filter-label">状态：</span>
             <div 
               v-for="option in productStatusOptions" 
               :key="option.value"
@@ -563,6 +633,21 @@ const submitProduct = () => {
             >
               {{ option.label }}
             </div>
+            <button class="add-btn-small" @click="openAddStatusModal">+ 添加状态</button>
+          </div>
+          
+          <!-- 分类筛选 -->
+          <div class="filter-bar">
+            <span class="filter-label">分类：</span>
+            <div 
+              v-for="option in categoryOptionsNew" 
+              :key="option.value"
+              :class="['filter-item', { active: selectedCategory === option.value }]"
+              @click="selectedCategory = option.value"
+            >
+              {{ option.label }}
+            </div>
+            <button class="add-btn-small" @click="openAddCategoryModal">+ 添加分类</button>
           </div>
           
           <!-- 商品列表 -->
@@ -702,6 +787,50 @@ const submitProduct = () => {
       </div>
     </div>
   </div>
+
+  <!-- 添加状态弹窗 -->
+  <div v-if="showAddStatusModal" class="modal-overlay" @click.self="closeAddStatusModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>添加状态</h3>
+        <button class="close-btn" @click="closeAddStatusModal">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>状态值（英文）：</label>
+          <input type="text" v-model="newStatus.value" class="form-input" placeholder="如：custom_status" />
+        </div>
+        <div class="form-group">
+          <label>状态标签（中文）：</label>
+          <input type="text" v-model="newStatus.label" class="form-input" placeholder="如：自定义状态" />
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="cancel-btn" @click="closeAddStatusModal">取消</button>
+        <button class="submit-btn" @click="confirmAddStatus">确认添加</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 添加分类弹窗 -->
+  <div v-if="showAddCategoryModal" class="modal-overlay" @click.self="closeAddCategoryModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>添加分类</h3>
+        <button class="close-btn" @click="closeAddCategoryModal">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>分类名称：</label>
+          <input type="text" v-model="newCategoryName" class="form-input" placeholder="如：新品" />
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="cancel-btn" @click="closeAddCategoryModal">取消</button>
+        <button class="submit-btn" @click="confirmAddCategory">确认添加</button>
+      </div>
+    </div>
+  </div>
 </template>
 
 <style scoped>
@@ -760,13 +889,21 @@ const submitProduct = () => {
 /* 筛选栏 */
 .filter-bar {
   display: flex;
+  align-items: center;
   background-color: white;
   border-radius: 8px;
-  padding: 10px;
+  padding: 10px 15px;
   margin-bottom: 20px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.05);
   flex-wrap: wrap;
-  gap: 5px;
+  gap: 10px;
+}
+
+.filter-label {
+  font-size: 14px;
+  color: #666;
+  font-weight: 500;
+  margin-right: 5px;
 }
 
 .filter-item {
@@ -1568,5 +1705,125 @@ const submitProduct = () => {
 
 .submit-btn:active {
   transform: translateY(0);
+}
+
+/* 小添加按钮 */
+.add-btn-small {
+  padding: 6px 14px;
+  background-color: #4caf50;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s;
+  margin-left: auto;
+}
+
+.add-btn-small:hover {
+  background-color: #388e3c;
+  transform: translateY(-1px);
+}
+
+/* 通用弹窗样式 */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background-color: white;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 450px;
+  overflow: hidden;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  background: linear-gradient(135deg, #ffcc00 0%, #ff9500 100%);
+  color: #1a1a1a;
+}
+
+.modal-header h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: bold;
+}
+
+.modal-header .close-btn {
+  width: 30px;
+  height: 30px;
+  border: none;
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 50%;
+  font-size: 18px;
+  cursor: pointer;
+  color: #1a1a1a;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-header .close-btn:hover {
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.modal-body {
+  padding: 24px;
+}
+
+.modal-body .form-group {
+  margin-bottom: 20px;
+}
+
+.modal-body .form-group:last-child {
+  margin-bottom: 0;
+}
+
+.modal-body label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+}
+
+.modal-body .form-input {
+  width: 100%;
+  padding: 12px 16px;
+  border: 2px solid #e8e8e8;
+  border-radius: 8px;
+  font-size: 14px;
+  transition: border-color 0.3s;
+  box-sizing: border-box;
+}
+
+.modal-body .form-input:focus {
+  outline: none;
+  border-color: #ffcc00;
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 20px 24px;
+  border-top: 1px solid #f0f0f0;
+  background: #fafafa;
 }
 </style>

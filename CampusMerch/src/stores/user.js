@@ -1,12 +1,37 @@
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 import { defineStore } from 'pinia'
 
+// 从 localStorage 加载用户数据
+const loadUserFromStorage = () => {
+  try {
+    const saved = localStorage.getItem('campus_user')
+    if (saved) {
+      return JSON.parse(saved)
+    }
+  } catch (e) {
+    console.error('Failed to load user from storage:', e)
+  }
+  return null
+}
+
+// 保存用户数据到 localStorage
+const saveUserToStorage = (data) => {
+  try {
+    localStorage.setItem('campus_user', JSON.stringify(data))
+  } catch (e) {
+    console.error('Failed to save user to storage:', e)
+  }
+}
+
 export const useUserStore = defineStore('user', () => {
+  // 从 localStorage 恢复数据
+  const savedUser = loadUserFromStorage()
+  
   // 用户登录状态
-  const isLoggedIn = ref(false)
+  const isLoggedIn = ref(savedUser?.isLoggedIn || false)
   
   // 用户信息
-  const userInfo = ref({
+  const userInfo = ref(savedUser?.userInfo || {
     username: '',
     avatar: '',
     email: ''
@@ -92,6 +117,14 @@ export const useUserStore = defineStore('user', () => {
   function clearSearchKeyword() {
     searchKeyword.value = ''
   }
+  
+  // 监听用户状态变化，自动保存到 localStorage
+  watch([isLoggedIn, userInfo], () => {
+    saveUserToStorage({
+      isLoggedIn: isLoggedIn.value,
+      userInfo: userInfo.value
+    })
+  }, { deep: true })
 
   return {
     isLoggedIn,

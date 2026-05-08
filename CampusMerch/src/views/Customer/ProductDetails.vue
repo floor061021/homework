@@ -1,277 +1,60 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
+import { getProductById } from '../../data/products.js'
 
 const route = useRoute()
-
-// 商品数据库
-const productsDB = [
-  { 
-    id: 1, 
-    name: '连帽衫', 
-    price: 199, 
-    originalPrice: 399, 
-    discount: '-48%',
-    description: '这款连帽衫采用优质面料，舒适保暖，时尚百搭。经典的设计风格适合各种场合穿着。',
-    details: [
-      '100%纯棉面料',
-      '连帽设计',
-      '袋鼠口袋',
-      '罗纹袖口和下摆',
-      '高品质印花'
-    ],
-    images: [
-      'https://neeko-copilot.bytedance.net/api/text_to_image?prompt=black%20hoodie%20with%20colorful%20doodle%20design%20product%20photo%20white%20background&image_size=portrait_4_3',
-      'https://neeko-copilot.bytedance.net/api/text_to_image?prompt=black%20hoodie%20side%20view%20product%20photo&image_size=portrait_4_3',
-      'https://neeko-copilot.bytedance.net/api/text_to_image?prompt=black%20hoodie%20back%20view%20product%20photography&image_size=portrait_4_3',
-      'https://neeko-copilot.bytedance.net/api/text_to_image?prompt=person%20wearing%20black%20hoodie%20casual%20style%20lifestyle%20photo&image_size=portrait_4_3'
-    ],
-    colors: [
-      { id: 'black', name: 'Black', hex: '#000000' },
-      { id: 'white', name: 'White', hex: '#FFFFFF' },
-      { id: 'grey', name: 'Heather Grey', hex: '#808080' }
-    ],
-    sizes: [
-      { id: 'xs', name: 'XS', stock: 5 },
-      { id: 's', name: 'S', stock: 12 },
-      { id: 'm', name: 'M', stock: 8 },
-      { id: 'l', name: 'L', stock: 15 },
-      { id: 'xl', name: 'XL', stock: 6 },
-      { id: 'xxl', name: 'XXL', stock: 3 }
-    ]
-  },
-  { 
-    id: 2, 
-    name: 'T恤', 
-    price: 99, 
-    originalPrice: 249, 
-    discount: '-60%',
-    description: '简约时尚的纯棉T恤，舒适透气，适合日常穿搭。',
-    details: [
-      '100%纯棉面料',
-      '舒适透气',
-      '简约设计',
-      '修身版型',
-      '多色可选'
-    ],
-    images: [
-      'https://neeko-copilot.bytedance.net/api/text_to_image?prompt=white%20cotton%20t-shirt%20minimalist%20design%20product%20photo&image_size=portrait_4_3',
-      'https://neeko-copilot.bytedance.net/api/text_to_image?prompt=white%20t-shirt%20side%20view%20product%20photo&image_size=portrait_4_3',
-      'https://neeko-copilot.bytedance.net/api/text_to_image?prompt=white%20t-shirt%20back%20view%20product%20photography&image_size=portrait_4_3',
-      'https://neeko-copilot.bytedance.net/api/text_to_image?prompt=person%20wearing%20white%20t-shirt%20casual%20style%20lifestyle%20photo&image_size=portrait_4_3'
-    ],
-    colors: [
-      { id: 'black', name: 'Black', hex: '#000000' },
-      { id: 'white', name: 'White', hex: '#FFFFFF' },
-      { id: 'navy', name: 'Navy', hex: '#001f3f' }
-    ],
-    sizes: [
-      { id: 's', name: 'S', stock: 20 },
-      { id: 'm', name: 'M', stock: 15 },
-      { id: 'l', name: 'L', stock: 18 },
-      { id: 'xl', name: 'XL', stock: 10 }
-    ]
-  },
-  { 
-    id: 3, 
-    name: '帽子', 
-    price: 59, 
-    originalPrice: 129, 
-    discount: '-55%',
-    description: '经典棒球帽，时尚百搭，适合户外活动。',
-    details: [
-      '优质棉质',
-      '可调帽围',
-      '透气网眼',
-      '刺绣LOGO',
-      '防晒遮阳'
-    ],
-    images: [
-      'https://neeko-copilot.bytedance.net/api/text_to_image?prompt=baseball%20cap%20casual%20style%20product%20photo%20white%20background&image_size=portrait_4_3',
-      'https://neeko-copilot.bytedance.net/api/text_to_image?prompt=baseball%20cap%20side%20view%20product%20photo&image_size=portrait_4_3',
-      'https://neeko-copilot.bytedance.net/api/text_to_image?prompt=baseball%20cap%20back%20view%20product%20photography&image_size=portrait_4_3',
-      'https://neeko-copilot.bytedance.net/api/text_to_image?prompt=person%20wearing%20baseball%20cap%20casual%20style%20lifestyle%20photo&image_size=portrait_4_3'
-    ],
-    colors: [
-      { id: 'black', name: 'Black', hex: '#000000' },
-      { id: 'white', name: 'White', hex: '#FFFFFF' },
-      { id: 'navy', name: 'Navy', hex: '#001f3f' },
-      { id: 'grey', name: 'Grey', hex: '#808080' }
-    ],
-    sizes: [
-      { id: 'one', name: 'One Size', stock: 50 }
-    ]
-  },
-  { 
-    id: 4, 
-    name: '卫衣', 
-    price: 159, 
-    originalPrice: 359, 
-    discount: '-55%',
-    description: '舒适保暖的圆领卫衣，简约时尚，适合春秋季节穿着。',
-    details: [
-      '抓绒内里',
-      '圆领设计',
-      '罗纹袖口',
-      '柔软舒适',
-      '经典版型'
-    ],
-    images: [
-      'https://neeko-copilot.bytedance.net/api/text_to_image?prompt=grey%20crewneck%20sweatshirt%20product%20photo%20white%20background&image_size=portrait_4_3',
-      'https://neeko-copilot.bytedance.net/api/text_to_image?prompt=grey%20sweatshirt%20side%20view%20product%20photo&image_size=portrait_4_3',
-      'https://neeko-copilot.bytedance.net/api/text_to_image?prompt=grey%20sweatshirt%20back%20view%20product%20photography&image_size=portrait_4_3',
-      'https://neeko-copilot.bytedance.net/api/text_to_image?prompt=person%20wearing%20grey%20sweatshirt%20casual%20style%20lifestyle%20photo&image_size=portrait_4_3'
-    ],
-    colors: [
-      { id: 'grey', name: 'Grey', hex: '#808080' },
-      { id: 'black', name: 'Black', hex: '#000000' },
-      { id: 'navy', name: 'Navy', hex: '#001f3f' }
-    ],
-    sizes: [
-      { id: 's', name: 'S', stock: 10 },
-      { id: 'm', name: 'M', stock: 12 },
-      { id: 'l', name: 'L', stock: 8 },
-      { id: 'xl', name: 'XL', stock: 6 }
-    ]
-  },
-  { 
-    id: 5, 
-    name: '长裤', 
-    price: 179, 
-    originalPrice: 369, 
-    discount: '-52%',
-    description: '舒适休闲长裤，经典版型，适合日常穿着。',
-    details: [
-      '棉质混纺',
-      '舒适透气',
-      '直筒版型',
-      '多口袋设计',
-      '百搭款式'
-    ],
-    images: [
-      'https://neeko-copilot.bytedance.net/api/text_to_image?prompt=black%20cotton%20pants%20casual%20style%20product%20photo&image_size=portrait_4_3',
-      'https://neeko-copilot.bytedance.net/api/text_to_image?prompt=black%20pants%20side%20view%20product%20photo&image_size=portrait_4_3',
-      'https://neeko-copilot.bytedance.net/api/text_to_image?prompt=black%20pants%20back%20view%20product%20photography&image_size=portrait_4_3',
-      'https://neeko-copilot.bytedance.net/api/text_to_image?prompt=person%20wearing%20black%20pants%20casual%20style%20lifestyle%20photo&image_size=portrait_4_3'
-    ],
-    colors: [
-      { id: 'black', name: 'Black', hex: '#000000' },
-      { id: 'navy', name: 'Navy', hex: '#001f3f' },
-      { id: 'khaki', name: 'Khaki', hex: '#c3b091' }
-    ],
-    sizes: [
-      { id: 'm', name: 'M', stock: 8 },
-      { id: 'l', name: 'L', stock: 10 },
-      { id: 'xl', name: 'XL', stock: 6 },
-      { id: 'xxl', name: 'XXL', stock: 4 }
-    ]
-  },
-  { 
-    id: 6, 
-    name: '运动裤', 
-    price: 199, 
-    originalPrice: 499, 
-    discount: '-60%',
-    description: '专业运动裤，舒适透气，适合运动休闲穿着。',
-    details: [
-      '速干面料',
-      '弹性腰围',
-      '修身版型',
-      '侧边口袋',
-      '反光细节'
-    ],
-    images: [
-      'https://neeko-copilot.bytedance.net/api/text_to_image?prompt=sport%20jogger%20pants%20athletic%20wear%20product%20photo&image_size=portrait_4_3',
-      'https://neeko-copilot.bytedance.net/api/text_to_image?prompt=sport%20pants%20side%20view%20product%20photo&image_size=portrait_4_3',
-      'https://neeko-copilot.bytedance.net/api/text_to_image?prompt=sport%20pants%20back%20view%20product%20photography&image_size=portrait_4_3',
-      'https://neeko-copilot.bytedance.net/api/text_to_image?prompt=person%20wearing%20sport%20pants%20athletic%20style%20lifestyle%20photo&image_size=portrait_4_3'
-    ],
-    colors: [
-      { id: 'black', name: 'Black', hex: '#000000' },
-      { id: 'grey', name: 'Grey', hex: '#808080' },
-      { id: 'navy', name: 'Navy', hex: '#001f3f' }
-    ],
-    sizes: [
-      { id: 's', name: 'S', stock: 6 },
-      { id: 'm', name: 'M', stock: 8 },
-      { id: 'l', name: 'L', stock: 10 },
-      { id: 'xl', name: 'XL', stock: 5 }
-    ]
-  },
-  { 
-    id: 7, 
-    name: '棒球帽', 
-    price: 69, 
-    originalPrice: 149, 
-    discount: '-54%',
-    description: '时尚棒球帽，经典设计，适合各种场合。',
-    details: [
-      '棉质面料',
-      '可调金属扣',
-      '正面刺绣',
-      '透气舒适',
-      '防晒遮阳'
-    ],
-    images: [
-      'https://neeko-copilot.bytedance.net/api/text_to_image?prompt=baseball%20cap%20with%20logo%20product%20photo%20white%20background&image_size=portrait_4_3',
-      'https://neeko-copilot.bytedance.net/api/text_to_image?prompt=baseball%20cap%20with%20logo%20side%20view%20product%20photo&image_size=portrait_4_3',
-      'https://neeko-copilot.bytedance.net/api/text_to_image?prompt=baseball%20cap%20with%20logo%20back%20view%20product%20photography&image_size=portrait_4_3',
-      'https://neeko-copilot.bytedance.net/api/text_to_image?prompt=person%20wearing%20baseball%20cap%20with%20logo%20lifestyle%20photo&image_size=portrait_4_3'
-    ],
-    colors: [
-      { id: 'black', name: 'Black', hex: '#000000' },
-      { id: 'white', name: 'White', hex: '#FFFFFF' },
-      { id: 'red', name: 'Red', hex: '#ff0000' },
-      { id: 'blue', name: 'Blue', hex: '#0066cc' }
-    ],
-    sizes: [
-      { id: 'one', name: 'One Size', stock: 30 }
-    ]
-  },
-  { 
-    id: 8, 
-    name: '帆布包', 
-    price: 49, 
-    originalPrice: 99, 
-    discount: '-51%',
-    description: '环保帆布包，大容量设计，适合日常使用。',
-    details: [
-      '100%帆布',
-      '大容量空间',
-      '内袋设计',
-      '耐用把手',
-      '印花图案'
-    ],
-    images: [
-      'https://neeko-copilot.bytedance.net/api/text_to_image?prompt=canvas%20tote%20bag%20minimalist%20design%20product%20photo&image_size=portrait_4_3',
-      'https://neeko-copilot.bytedance.net/api/text_to_image?prompt=canvas%20tote%20bag%20side%20view%20product%20photo&image_size=portrait_4_3',
-      'https://neeko-copilot.bytedance.net/api/text_to_image?prompt=canvas%20tote%20bag%20back%20view%20product%20photography&image_size=portrait_4_3',
-      'https://neeko-copilot.bytedance.net/api/text_to_image?prompt=person%20carrying%20canvas%20tote%20bag%20lifestyle%20photo&image_size=portrait_4_3'
-    ],
-    colors: [
-      { id: 'natural', name: 'Natural', hex: '#f5f5dc' },
-      { id: 'black', name: 'Black', hex: '#000000' },
-      { id: 'navy', name: 'Navy', hex: '#001f3f' }
-    ],
-    sizes: [
-      { id: 'one', name: 'One Size', stock: 25 }
-    ]
-  }
-]
-
-// 根据ID获取商品
-const getProductById = (id) => {
-  return productsDB.find(p => p.id === parseInt(id)) || productsDB[0]
-}
+const router = useRouter()
 
 // 当前商品数据
-const product = ref(productsDB[0])
+const product = ref(null)
+const loading = ref(true)
+
+// 默认商品数据（用于补充缺失的字段）
+const getDefaultProductData = (baseProduct) => {
+  return {
+    ...baseProduct,
+    description: baseProduct.description || `${baseProduct.name}采用优质面料，舒适透气，时尚百搭。经典的设计风格适合各种场合穿着。`,
+    details: baseProduct.details || [
+      '优质面料制作',
+      '舒适透气',
+      '时尚设计',
+      '经典版型',
+      '多色可选'
+    ],
+    images: baseProduct.images || [
+      baseProduct.image,
+      baseProduct.image,
+      baseProduct.image,
+      baseProduct.image
+    ],
+    colors: baseProduct.colors || [
+      { id: 'black', name: '黑色', hex: '#000000' },
+      { id: 'white', name: '白色', hex: '#FFFFFF' },
+      { id: 'grey', name: '灰色', hex: '#808080' }
+    ],
+    sizes: baseProduct.sizes || [
+      { id: 's', name: 'S', stock: Math.floor(baseProduct.stock / 4) },
+      { id: 'm', name: 'M', stock: Math.floor(baseProduct.stock / 4) },
+      { id: 'l', name: 'L', stock: Math.floor(baseProduct.stock / 4) },
+      { id: 'xl', name: 'XL', stock: Math.floor(baseProduct.stock / 4) }
+    ]
+  }
+}
 
 onMounted(() => {
   const productId = route.params.id
   if (productId) {
-    product.value = getProductById(productId)
+    const foundProduct = getProductById(productId)
+    if (foundProduct) {
+      product.value = getDefaultProductData(foundProduct)
+    } else {
+      // 商品不存在，返回商品大厅
+      alert('商品不存在或已下架')
+      router.push('/')
+    }
   }
+  loading.value = false
 })
 
 // 选中的规格
@@ -291,12 +74,19 @@ const errors = ref({
 
 // 计算折扣金额
 const discountAmount = computed(() => {
-  return product.value.originalPrice - product.value.price
+  if (!product.value) return 0
+  return (product.value.originalPrice || product.value.price) - product.value.price
+})
+
+// 计算折扣百分比
+const discountPercent = computed(() => {
+  if (!product.value || !product.value.originalPrice) return 0
+  return Math.round(((product.value.originalPrice - product.value.price) / product.value.originalPrice) * 100)
 })
 
 // 获取当前选中规格的库存
 const currentStock = computed(() => {
-  if (!selectedSize.value) return 0
+  if (!product.value || !selectedSize.value) return 0
   const size = product.value.sizes.find(s => s.id === selectedSize.value)
   return size ? size.stock : 0
 })
@@ -372,10 +162,16 @@ const setMainImage = (index) => {
 
 <template>
   <div class="product-detail-page">
-    <div class="product-container">
+    <!-- 加载状态 -->
+    <div v-if="loading" class="loading-state">
+      <div class="loading-spinner">加载中...</div>
+    </div>
+    
+    <!-- 商品内容 -->
+    <div v-else-if="product" class="product-container">
       <!-- 面包屑导航 -->
       <div class="breadcrumbs">
-        <a href="/">Home</a> / <a href="/producthall">Shop</a> / {{ product.name }}
+        <router-link to="/">Home</router-link> / <router-link to="/">Shop</router-link> / {{ product.name }}
       </div>
 
       <div class="product-main">
@@ -396,7 +192,7 @@ const setMainImage = (index) => {
           <!-- 主图展示 -->
           <div class="main-image">
             <img :src="product.images[currentImageIndex]" :alt="product.name" />
-            <div class="discount-badge">{{ product.discount }}</div>
+            <div v-if="discountPercent > 0" class="discount-badge">-{{ discountPercent }}%</div>
           </div>
         </div>
 
@@ -408,8 +204,8 @@ const setMainImage = (index) => {
           <!-- 价格信息 -->
           <div class="price-section">
             <span class="current-price">¥{{ product.price }}</span>
-            <span class="original-price">¥{{ product.originalPrice }}</span>
-            <span class="you-save">You Save ¥{{ discountAmount }}</span>
+            <span v-if="product.originalPrice" class="original-price">¥{{ product.originalPrice }}</span>
+            <span v-if="discountAmount > 0" class="you-save">You Save ¥{{ discountAmount }}</span>
           </div>
 
           <!-- 商品详情列表 -->
@@ -510,6 +306,12 @@ const setMainImage = (index) => {
         </div>
       </div>
     </div>
+    
+    <!-- 商品不存在 -->
+    <div v-else class="not-found">
+      <h2>商品不存在或已下架</h2>
+      <router-link to="/" class="back-btn">返回商品大厅</router-link>
+    </div>
   </div>
 </template>
 
@@ -524,6 +326,47 @@ const setMainImage = (index) => {
   max-width: 1200px;
   margin: 0 auto;
   padding: 40px 20px;
+}
+
+/* 加载状态 */
+.loading-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 500px;
+}
+
+.loading-spinner {
+  font-size: 18px;
+  color: #666;
+}
+
+/* 商品不存在 */
+.not-found {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 500px;
+  gap: 20px;
+}
+
+.not-found h2 {
+  color: #666;
+}
+
+.back-btn {
+  padding: 12px 30px;
+  background-color: #ffcc00;
+  color: #1a1a1a;
+  text-decoration: none;
+  border-radius: 4px;
+  font-weight: bold;
+  transition: background-color 0.3s;
+}
+
+.back-btn:hover {
+  background-color: #e6b800;
 }
 
 /* 面包屑导航 */
@@ -609,8 +452,8 @@ const setMainImage = (index) => {
   color: white;
   font-size: 14px;
   font-weight: bold;
-  width: 40px;
-  height: 40px;
+  width: 50px;
+  height: 50px;
   display: flex;
   align-items: center;
   justify-content: center;

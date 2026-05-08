@@ -1,5 +1,8 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { useUserStore } from '../../stores/user'
+
+const userStore = useUserStore()
 
 // 返回顶部按钮显示状态
 const showBackTop = ref(false)
@@ -123,77 +126,90 @@ const confirmReceipt = (orderId) => {
         <p>管理您的所有订单</p>
       </div>
       
-      <!-- 状态筛选栏 -->
-      <div class="status-filter">
-        <div 
-          v-for="option in statusOptions" 
-          :key="option.value"
-          :class="['filter-item', { active: activeStatus === option.value }]"
-          @click="activeStatus = option.value"
-        >
-          {{ option.label }}
+      <!-- 未登录状态 -->
+      <div v-if="!userStore.isLoggedIn" class="login-prompt">
+        <div class="login-prompt-content">
+          <svg t="1777463809803" class="login-icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="8185"><path d="M983.722576 312.747226a510.463422 510.463422 0 0 0-109.653876-162.815816A510.377422 510.377422 0 0 0 512.00011 0.00158a510.292422 510.292422 0 0 0-362.06859 149.92983A510.292422 510.292422 0 0 0 0.00169 512.001a510.121422 510.121422 0 0 0 149.92983 362.06759A510.292422 510.292422 0 0 0 512.00111 1023.99942a510.292422 510.292422 0 0 0 362.06759-149.92983A510.121422 510.121422 0 0 0 1023.99953 512c0-69.119922-13.567985-136.190846-40.276954-199.252774zM516.096105 577.023926a183.039793 183.039793 0 0 1-182.868792-182.868793c0-100.863886 82.005907-182.868793 182.783792-182.868792 100.863886 0 182.869793 82.004907 182.869793 182.869792a183.039793 183.039793 0 0 1-182.869793 182.867793zM320.342327 693.759794a311.977647 311.977647 0 0 1 195.669778-68.009923c71.763919 0 139.347842 23.465973 195.411779 67.924923a315.732642 315.732642 0 0 1 109.311876 166.911811 460.116479 460.116479 0 0 1-304.809654 114.68787 459.689479 459.689479 0 0 1-304.639655-114.60287A315.732642 315.732642 0 0 1 320.342327 693.759794z m413.695531-38.825956a362.665589 362.665589 0 0 0-108.885876-59.477933c32.255963-18.772979 59.562933-45.055949 79.61591-76.543913a232.532737 232.532737 0 0 0-195.924778-356.777596 232.532737 232.532737 0 0 0-196.180778 356.436597 234.299735 234.299735 0 0 0 79.18991 76.543913 362.921589 362.921589 0 0 0-110.250875 59.989932 369.321582 369.321582 0 0 0-117.589867 165.716812 457.727481 457.727481 0 0 1-115.199869-304.469655 456.788483 456.788483 0 0 1 134.399847-324.862632 457.556482 457.556482 0 0 1 324.692633-134.569847 457.641482 457.641482 0 0 1 324.692632 134.569847 458.239481 458.239481 0 0 1 134.485847 324.862632 456.873482 456.873482 0 0 1-115.199869 304.383655 369.236582 369.236582 0 0 0-117.759867-165.801812z" p-id="8186" fill="#ffcc00"></path></svg>
+          <h2>您还未登录</h2>
+          <p>登录后可以查看您的订单信息</p>
+          <button class="go-login-btn" @click="userStore.openLoginModal">去登录</button>
         </div>
       </div>
       
-      <!-- 订单列表 -->
-      <div class="orders-list">
-        <div v-if="filteredOrders.length === 0" class="empty-state">
-          <div class="empty-icon">📦</div>
-          <p>暂无订单</p>
+      <!-- 已登录状态 -->
+      <div v-else>
+        <!-- 状态筛选栏 -->
+        <div class="status-filter">
+          <div 
+            v-for="option in statusOptions" 
+            :key="option.value"
+            :class="['filter-item', { active: activeStatus === option.value }]"
+            @click="activeStatus = option.value"
+          >
+            {{ option.label }}
+          </div>
         </div>
         
-        <div v-for="order in filteredOrders" :key="order.id" class="order-card">
-          <!-- 订单头部 -->
-          <div class="order-header">
-            <div class="order-id">订单号：{{ order.id }}</div>
-            <div class="order-time">{{ order.createTime }}</div>
+        <!-- 订单列表 -->
+        <div class="orders-list">
+          <div v-if="filteredOrders.length === 0" class="empty-state">
+            <div class="empty-icon">📦</div>
+            <p>暂无订单</p>
           </div>
           
-          <!-- 订单商品列表 -->
-          <div class="order-items">
-            <div v-for="(item, index) in order.items" :key="index" class="order-item">
-              <div class="item-image">
-                <div class="image-placeholder">👕</div>
+          <div v-for="order in filteredOrders" :key="order.id" class="order-card">
+            <!-- 订单头部 -->
+            <div class="order-header">
+              <div class="order-id">订单号：{{ order.id }}</div>
+              <div class="order-time">{{ order.createTime }}</div>
+            </div>
+            
+            <!-- 订单商品列表 -->
+            <div class="order-items">
+              <div v-for="(item, index) in order.items" :key="index" class="order-item">
+                <div class="item-image">
+                  <div class="image-placeholder">👕</div>
+                </div>
+                <div class="item-info">
+                  <h4>{{ item.name }}</h4>
+                  <p class="item-price">¥{{ item.price.toFixed(2) }}</p>
+                  <p class="item-quantity">x{{ item.quantity }}</p>
+                </div>
               </div>
-              <div class="item-info">
-                <h4>{{ item.name }}</h4>
-                <p class="item-price">¥{{ item.price.toFixed(2) }}</p>
-                <p class="item-quantity">x{{ item.quantity }}</p>
+            </div>
+            
+            <!-- 订单底部 -->
+            <div class="order-footer">
+              <div class="order-total">
+                <span>实付款：</span>
+                <span class="total-price">¥{{ order.totalPrice.toFixed(2) }}</span>
               </div>
-            </div>
-          </div>
-          
-          <!-- 订单底部 -->
-          <div class="order-footer">
-            <div class="order-total">
-              <span>实付款：</span>
-              <span class="total-price">¥{{ order.totalPrice.toFixed(2) }}</span>
-            </div>
-            <div class="order-status">
-              <span :style="{ color: getStatusStyle(order.status).color }">
-                {{ getStatusStyle(order.status).text }}
-              </span>
-            </div>
-            <div class="order-actions">
-              <button 
-                v-if="order.status === 'pending_payment'" 
-                class="action-btn primary"
-              >
-                立即支付
-              </button>
-              <button 
-                v-if="order.status === 'pending_receipt'" 
-                class="action-btn primary"
-                @click="confirmReceipt(order.id)"
-              >
-                确认收货
-              </button>
-              <button 
-                v-if="order.status === 'completed'" 
-                class="action-btn secondary"
-              >
-                查看详情
-              </button>
+              <div class="order-status">
+                <span :style="{ color: getStatusStyle(order.status).color }">
+                  {{ getStatusStyle(order.status).text }}
+                </span>
+              </div>
+              <div class="order-actions">
+                <button 
+                  v-if="order.status === 'pending_payment'" 
+                  class="action-btn primary"
+                >
+                  立即支付
+                </button>
+                <button 
+                  v-if="order.status === 'pending_receipt'" 
+                  class="action-btn primary"
+                  @click="confirmReceipt(order.id)"
+                >
+                  确认收货
+                </button>
+                <button 
+                  v-if="order.status === 'completed'" 
+                  class="action-btn secondary"
+                >
+                  查看详情
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -237,6 +253,57 @@ const confirmReceipt = (orderId) => {
 .page-header p {
   color: #999;
   margin: 0;
+}
+
+/* 未登录提示样式 */
+.login-prompt {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+}
+
+.login-prompt-content {
+  background-color: white;
+  border-radius: 12px;
+  padding: 60px 40px;
+  text-align: center;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+}
+
+.login-icon {
+  font-size: 80px;
+  margin-bottom: 20px;
+}
+
+.login-prompt-content h2 {
+  font-size: 24px;
+  color: #333;
+  margin: 0 0 10px 0;
+}
+
+.login-prompt-content p {
+  color: #999;
+  margin: 0 0 30px 0;
+  font-size: 14px;
+}
+
+.go-login-btn {
+  padding: 14px 40px;
+  background-color: #ffcc00;
+  color: #1a1a1a;
+  border: none;
+  border-radius: 4px;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.go-login-btn:hover {
+  background-color: #e6b800;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(255, 204, 0, 0.3);
 }
 
 .status-filter {
