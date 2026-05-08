@@ -1,6 +1,7 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useUserStore } from '../../stores/user'
+import { products } from '../../data/products.js'
 
 const userStore = useUserStore()
 
@@ -45,7 +46,7 @@ const orders = ref([
     status: 'pending_receipt',
     totalPrice: 398.00,
     items: [
-      { name: '连帽衫', price: 199, quantity: 2, image: '' }
+      { productId: 'P001', name: '连帽衫', price: 199, quantity: 2 }
     ]
   },
   {
@@ -54,7 +55,7 @@ const orders = ref([
     status: 'completed',
     totalPrice: 99.00,
     items: [
-      { name: 'T恤', price: 99, quantity: 1, image: '' }
+      { productId: 'P002', name: 'T恤', price: 99, quantity: 1 }
     ]
   },
   {
@@ -63,7 +64,7 @@ const orders = ref([
     status: 'pending_shipping',
     totalPrice: 59.00,
     items: [
-      { name: '帽子', price: 59, quantity: 1, image: '' }
+      { productId: 'P003', name: '帽子', price: 59, quantity: 1 }
     ]
   },
   {
@@ -72,7 +73,7 @@ const orders = ref([
     status: 'pending_payment',
     totalPrice: 159.00,
     items: [
-      { name: '卫衣', price: 159, quantity: 1, image: '' }
+      { productId: 'P004', name: '卫衣', price: 159, quantity: 1 }
     ]
   },
   {
@@ -81,11 +82,17 @@ const orders = ref([
     status: 'completed',
     totalPrice: 499.00,
     items: [
-      { name: '连帽衫', price: 199, quantity: 2, image: '' },
-      { name: '帽子', price: 59, quantity: 2, image: '' }
+      { productId: 'P001', name: '连帽衫', price: 199, quantity: 2 },
+      { productId: 'P003', name: '帽子', price: 59, quantity: 2 }
     ]
   }
 ])
+
+// 根据商品ID获取商品图片
+const getProductImage = (productId) => {
+  const product = products.value.find(p => p.id === productId)
+  return product ? product.image : ''
+}
 
 // 过滤后的订单列表
 const filteredOrders = computed(() => {
@@ -168,7 +175,7 @@ const confirmReceipt = (orderId) => {
             <div class="order-items">
               <div v-for="(item, index) in order.items" :key="index" class="order-item">
                 <div class="item-image">
-                  <div class="image-placeholder">👕</div>
+                  <img :src="getProductImage(item.productId)" :alt="item.name" class="product-img" />
                 </div>
                 <div class="item-info">
                   <h4>{{ item.name }}</h4>
@@ -414,6 +421,13 @@ const confirmReceipt = (orderId) => {
 
 .image-placeholder {
   font-size: 32px;
+}
+
+.product-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 4px;
 }
 
 .item-info {
