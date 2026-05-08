@@ -479,14 +479,40 @@ const handleConfirm = () => {
 
 // 商品添加弹窗
 const showAddProductModal = ref(false)
+const showCategorySelectModal = ref(false) // 先显示分类选择弹窗
+const newProductCategory = ref('') // 用于添加商品时选择的分类
 
 const openAddProductModal = () => {
-  showAddProductModal.value = true
+  showCategorySelectModal.value = true // 先显示分类选择
 }
 
 const closeAddProductModal = () => {
   showAddProductModal.value = false
   resetProductForm()
+}
+
+const closeCategorySelectModal = () => {
+  showCategorySelectModal.value = false
+  newProductCategory.value = ''
+}
+
+// 选择分类后打开商品添加弹窗
+const selectCategory = (category) => {
+  newProductCategory.value = category
+  newProduct.value.category = category
+  showCategorySelectModal.value = false
+  showAddProductModal.value = true
+}
+
+// 获取分类图标
+const getCategoryIcon = (category) => {
+  const icons = {
+    '上衣': '👕',
+    '裤子': '�',
+    '帽子': '🧢',
+    '其他': '�'
+  }
+  return icons[category] || '📦'
 }
 
 // 添加状态弹窗
@@ -555,7 +581,71 @@ const newProduct = ref({
   category: '',
   coverImage: '',
   allowCustom: false,
-  status: 'draft'
+  status: 'draft',
+  // 服饰类属性
+  size: '',
+  color: '',
+  material: '',
+  fitType: '',
+  collarType: '',
+  sleeveLength: '',
+  season: '',
+  targetAudience: '',
+  // 裤子专属属性
+  pantLength: '',
+  // 箱包类属性
+  style: '',
+  capacity: '',
+  // 文具类属性
+  brand: '',
+  specification: '',
+  suitableAge: '',
+  // 饰品类属性
+  gender: '',
+  occasion: ''
+})
+
+// 分类属性配置（与数据文件中的分类对应）
+const categoryAttributes = {
+  '上衣': [
+    { key: 'size', label: '尺码', type: 'select', options: ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL'] },
+    { key: 'color', label: '颜色', type: 'select', options: ['白色', '黑色', '灰色', '蓝色', '红色', '黄色', '绿色', '粉色', '橙色', '紫色'] },
+    { key: 'material', label: '材质', type: 'select', options: ['纯棉', '涤纶', '棉混纺', '针织', '羊毛', '加绒', '冰丝', '竹纤维'] },
+    { key: 'fitType', label: '版型', type: 'select', options: ['修身', '宽松', '合身', '紧身', 'oversize'] },
+    { key: 'collarType', label: '领型', type: 'select', options: ['圆领', 'V领', '翻领', '高领', '连帽', '半高领', 'POLO领'] },
+    { key: 'sleeveLength', label: '袖长', type: 'select', options: ['短袖', '长袖', '七分袖', '五分袖', '无袖'] },
+    { key: 'season', label: '适用季节', type: 'select', options: ['春', '夏', '秋', '冬', '四季'] },
+    { key: 'targetAudience', label: '适用人群', type: 'select', options: ['男', '女', '中性', '儿童'] }
+  ],
+  '裤子': [
+    { key: 'size', label: '尺码', type: 'select', options: ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL'] },
+    { key: 'color', label: '颜色', type: 'select', options: ['黑色', '白色', '灰色', '蓝色', '卡其', '棕色', '军绿'] },
+    { key: 'material', label: '材质', type: 'select', options: ['纯棉', '涤纶', '牛仔布', '运动面料', '灯芯绒'] },
+    { key: 'fitType', label: '版型', type: 'select', options: ['修身', '宽松', '直筒', '阔腿', '紧身'] },
+    { key: 'pantLength', label: '裤长', type: 'select', options: ['九分裤', '长裤', '七分裤', '短裤'] },
+    { key: 'season', label: '适用季节', type: 'select', options: ['春', '夏', '秋', '冬', '四季'] },
+    { key: 'targetAudience', label: '适用人群', type: 'select', options: ['男', '女', '中性', '儿童'] }
+  ],
+  '帽子': [
+    { key: 'size', label: '尺码', type: 'select', options: ['均码', 'S', 'M', 'L', 'XL'] },
+    { key: 'color', label: '颜色', type: 'select', options: ['黑色', '白色', '灰色', '蓝色', '红色', '米色', '卡其', '绿色', '粉色'] },
+    { key: 'material', label: '材质', type: 'select', options: ['纯棉', '羊毛', '涤纶', '皮革', '针织', '帆布'] },
+    { key: 'style', label: '风格', type: 'select', options: ['休闲', '运动', '时尚', '复古', '文艺'] },
+    { key: 'season', label: '适用季节', type: 'select', options: ['春', '夏', '秋', '冬'] },
+    { key: 'targetAudience', label: '适用人群', type: 'select', options: ['男', '女', '中性', '儿童'] }
+  ],
+  '其他': [
+    { key: 'color', label: '颜色', type: 'select', options: ['黑色', '白色', '灰色', '蓝色', '红色', '黄色', '绿色', '粉色'] },
+    { key: 'material', label: '材质', type: 'select', options: ['帆布', '牛津布', '棉布', 'PU皮', '塑料', '金属', '木质'] },
+    { key: 'style', label: '款式', type: 'select', options: ['单肩', '双肩', '手提', '斜挎', '简约', '复古', '时尚'] },
+    { key: 'capacity', label: '容量', type: 'select', options: ['小号', '中号', '大号'] },
+    { key: 'occasion', label: '适用场景', type: 'select', options: ['日常', '校园', '旅行', '通勤', '礼品'] }
+  ]
+}
+
+// 获取当前分类的属性列表
+const currentCategoryAttributes = computed(() => {
+  return categoryAttributes[newProductCategory.value] || []
 })
 
 // 分类选项（从共享数据获取，不包含"全部"）
@@ -572,7 +662,28 @@ const resetProductForm = () => {
     category: '',
     coverImage: '',
     allowCustom: false,
-    status: 'draft'
+    status: 'draft',
+    // 服饰类属性
+    size: '',
+    color: '',
+    material: '',
+    fitType: '',
+    collarType: '',
+    sleeveLength: '',
+    season: '',
+    targetAudience: '',
+    // 裤子专属属性
+    pantLength: '',
+    // 箱包类属性
+    style: '',
+    capacity: '',
+    // 文具类属性
+    brand: '',
+    specification: '',
+    suitableAge: '',
+    // 饰品类属性
+    gender: '',
+    occasion: ''
   }
 }
 
@@ -602,7 +713,24 @@ const submitProduct = () => {
     status: newProduct.value.status,
     category: newProduct.value.category,
     originalPrice: parseFloat(newProduct.value.price),
-    discount: 0
+    discount: 0,
+    // 分类属性
+    size: newProduct.value.size || '',
+    color: newProduct.value.color || '',
+    material: newProduct.value.material || '',
+    fitType: newProduct.value.fitType || '',
+    collarType: newProduct.value.collarType || '',
+    sleeveLength: newProduct.value.sleeveLength || '',
+    season: newProduct.value.season || '',
+    targetAudience: newProduct.value.targetAudience || '',
+    pantLength: newProduct.value.pantLength || '',
+    style: newProduct.value.style || '',
+    capacity: newProduct.value.capacity || '',
+    brand: newProduct.value.brand || '',
+    specification: newProduct.value.specification || '',
+    suitableAge: newProduct.value.suitableAge || '',
+    gender: newProduct.value.gender || '',
+    occasion: newProduct.value.occasion || ''
   }
 
   addProduct(product)
@@ -706,11 +834,35 @@ const submitProduct = () => {
     </main>
   </div>
 
+  <!-- 分类选择弹窗 -->
+  <div v-if="showCategorySelectModal" class="category-select-modal-overlay" @click.self="closeCategorySelectModal">
+    <div class="category-select-modal">
+      <div class="category-select-header">
+        <h2>请选择商品分类</h2>
+        <button class="close-modal-btn" @click="closeCategorySelectModal">×</button>
+      </div>
+      <div class="category-select-body">
+        <div class="category-grid">
+          <button 
+            v-for="cat in categoryOptions" 
+            :key="cat.value" 
+            :class="['category-btn', cat.value]"
+            @click="selectCategory(cat.value)"
+          >
+            <span class="category-icon">{{ getCategoryIcon(cat.value) }}</span>
+            <span class="category-name">{{ cat.label }}</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- 商品添加弹窗 -->
   <div v-if="showAddProductModal" class="add-product-modal-overlay" @click.self="closeAddProductModal">
-    <div class="add-product-modal">
-      <div class="add-product-modal-header">
-        <h2>添加商品</h2>
+    <div :class="['add-product-modal', newProductCategory]">
+      <div :class="['add-product-modal-header', newProductCategory]">
+        <div class="header-icon">{{ getCategoryIcon(newProductCategory) }}</div>
+        <h2>添加{{ newProductCategory }}</h2>
         <button class="close-modal-btn" @click="closeAddProductModal">×</button>
       </div>
       <div class="add-product-modal-body">
@@ -724,10 +876,16 @@ const submitProduct = () => {
             <input type="text" v-model="newProduct.code" class="form-input" placeholder="系统自动生成" />
           </div>
           <div class="form-group">
-            <label>商品分类 <span class="required">*</span></label>
-            <select v-model="newProduct.category" class="form-select">
-              <option value="">请选择分类</option>
-              <option v-for="cat in categoryOptions" :key="cat.value" :value="cat.value">{{ cat.label }}</option>
+            <label>尺码选择</label>
+            <select v-model="newProduct.size" class="form-select">
+              <option value="" disabled>请选择尺码</option>
+              <option value="XS">XS</option>
+              <option value="S">S</option>
+              <option value="M">M</option>
+              <option value="L">L</option>
+              <option value="XL">XL</option>
+              <option value="XXL">XXL</option>
+              <option value="XXXL">XXXL</option>
             </select>
           </div>
           <div class="form-group">
@@ -1391,6 +1549,135 @@ const submitProduct = () => {
   }
 }
 
+/* 分类选择弹窗样式 */
+.category-select-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.category-select-modal {
+  background-color: white;
+  border-radius: 16px;
+  width: 90%;
+  max-width: 600px;
+  overflow: hidden;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
+}
+
+.category-select-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.category-select-header h2 {
+  margin: 0;
+  font-size: 22px;
+  font-weight: bold;
+}
+
+.category-select-body {
+  padding: 24px;
+}
+
+.category-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+
+.category-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px 12px;
+  border: 2px solid #e0e0e0;
+  border-radius: 12px;
+  background: white;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.category-btn:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+}
+
+.category-btn:active {
+  transform: translateY(-2px);
+}
+
+.category-icon {
+  font-size: 36px;
+  margin-bottom: 8px;
+}
+
+.category-name {
+  font-size: 14px;
+  color: #333;
+  font-weight: 500;
+}
+
+/* 不同分类的按钮样式 */
+.category-btn.上衣 {
+  border-color: #ff9500;
+  background: linear-gradient(135deg, #fff8f0 0%, #fff 100%);
+}
+.category-btn.上衣:hover {
+  background: linear-gradient(135deg, #ff9500 0%, #ffcc00 100%);
+  color: white;
+}
+.category-btn.上衣:hover .category-name {
+  color: white;
+}
+
+.category-btn.裤子 {
+  border-color: #007aff;
+  background: linear-gradient(135deg, #f0f7ff 0%, #fff 100%);
+}
+.category-btn.裤子:hover {
+  background: linear-gradient(135deg, #007aff 0%, #0066cc 100%);
+  color: white;
+}
+.category-btn.裤子:hover .category-name {
+  color: white;
+}
+
+.category-btn.帽子 {
+  border-color: #ff2d55;
+  background: linear-gradient(135deg, #fff0f3 0%, #fff 100%);
+}
+.category-btn.帽子:hover {
+  background: linear-gradient(135deg, #ff2d55 0%, #cc0033 100%);
+  color: white;
+}
+.category-btn.帽子:hover .category-name {
+  color: white;
+}
+
+.category-btn.其他 {
+  border-color: #5856d6;
+  background: linear-gradient(135deg, #f0f0ff 0%, #fff 100%);
+}
+.category-btn.其他:hover {
+  background: linear-gradient(135deg, #5856d6 0%, #4442c0 100%);
+  color: white;
+}
+.category-btn.其他:hover .category-name {
+  color: white;
+}
+
 /* 商品添加弹窗样式 */
 .add-product-modal-overlay {
   position: fixed;
@@ -1424,10 +1711,54 @@ const submitProduct = () => {
   color: #1a1a1a;
 }
 
+.header-icon {
+  font-size: 28px;
+  margin-right: 12px;
+}
+
 .add-product-modal-header h2 {
   margin: 0;
   font-size: 20px;
   font-weight: bold;
+  flex: 1;
+}
+
+.category-badge {
+  display: inline-block;
+  padding: 6px 16px;
+  border-radius: 20px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+/* 不同分类的弹窗头部样式 */
+.add-product-modal-header.上衣 {
+  background: linear-gradient(135deg, #ff9500 0%, #ffcc00 100%);
+}
+.add-product-modal-header.裤子 {
+  background: linear-gradient(135deg, #007aff 0%, #0066cc 100%);
+}
+.add-product-modal-header.帽子 {
+  background: linear-gradient(135deg, #ff2d55 0%, #cc0033 100%);
+}
+.add-product-modal-header.其他 {
+  background: linear-gradient(135deg, #5856d6 0%, #4442c0 100%);
+}
+
+/* 不同分类的提交按钮样式 */
+.add-product-modal.上衣 .submit-btn {
+  background: linear-gradient(135deg, #ff9500 0%, #ffcc00 100%);
+}
+.add-product-modal.裤子 .submit-btn {
+  background: linear-gradient(135deg, #007aff 0%, #0066cc 100%);
+}
+.add-product-modal.帽子 .submit-btn {
+  background: linear-gradient(135deg, #ff2d55 0%, #cc0033 100%);
+}
+.add-product-modal.其他 .submit-btn {
+  background: linear-gradient(135deg, #5856d6 0%, #4442c0 100%);
 }
 
 .close-modal-btn {
