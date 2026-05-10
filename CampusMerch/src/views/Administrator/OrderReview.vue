@@ -380,6 +380,9 @@ const getStatusText = (status) => {
   border-radius: 20px;
   font-size: 13px;
   font-weight: 500;
+  white-space: nowrap;
+  min-width: 60px;
+  text-align: center;
 }
 
 .status-pending {

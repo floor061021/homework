@@ -177,9 +177,10 @@ const buyNow = () => {
   }
 }
 
-// 切换主图
-const setMainImage = (index) => {
-  currentImageIndex.value = index
+// 返回商品大厅并定位到该商品
+const goBack = () => {
+  // 通过URL参数传递商品ID，供商品大厅页面定位使用
+  router.push({ path: '/', query: { scrollToProduct: route.params.id } })
 }
 </script>
 
@@ -192,6 +193,11 @@ const setMainImage = (index) => {
     
     <!-- 商品内容 -->
     <div v-else-if="product" class="product-container">
+      <!-- 返回按钮 -->
+      <button class="back-button" @click="goBack">
+        <span class="back-arrow">←</span>
+      </button>
+      
       <!-- 面包屑导航 -->
       <div class="breadcrumbs">
         <router-link to="/">Home</router-link> / <router-link to="/">Shop</router-link> / {{ product.name }}
@@ -231,10 +237,17 @@ const setMainImage = (index) => {
             <span v-if="discountAmount > 0" class="you-save">You Save ¥{{ discountAmount }}</span>
           </div>
 
-          <!-- 商品详情列表 -->
-          <ul class="product-details">
-            <li v-for="(detail, index) in product.details" :key="index">{{ detail }}</li>
-          </ul>
+          <!-- 商品信息 -->
+          <div class="product-info">
+            <div class="info-item">
+              <span class="info-label">分类：</span>
+              <span class="info-value">{{ product.category }}</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">创建时间：</span>
+              <span class="info-value">{{ product.createTime }}</span>
+            </div>
+          </div>
 
           <!-- 规格选择 -->
           <div class="spec-section">
@@ -346,6 +359,7 @@ const setMainImage = (index) => {
 }
 
 .product-container {
+  position: relative;
   max-width: 1200px;
   margin: 0 auto;
   padding: 40px 20px;
@@ -390,6 +404,42 @@ const setMainImage = (index) => {
 
 .back-btn:hover {
   background-color: #e6b800;
+}
+
+/* 返回按钮 */
+.back-button {
+  position: absolute;
+  top: 20px;
+  left: -200px;
+  width: 50px;
+  height: 50px;
+  background-color: #ffcc00;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
+  transition: all 0.3s;
+  z-index: 100;
+}
+
+.back-button:hover {
+  background-color: #e6b800;
+  transform: scale(1.1);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.back-button:active {
+  transform: scale(0.95);
+}
+
+.back-arrow {
+  font-size: 24px;
+  color: #1a1a1a;
+  font-weight: bold;
+  line-height: 1;
 }
 
 /* 面包屑导航 */
@@ -517,6 +567,30 @@ const setMainImage = (index) => {
 .you-save {
   font-size: 14px;
   color: #4caf50;
+  font-weight: 500;
+}
+
+.product-info {
+  margin: 0 0 30px 0;
+  border-top: 1px solid #f0f0f0;
+  border-bottom: 1px solid #f0f0f0;
+  padding: 20px 0;
+}
+
+.info-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 0;
+}
+
+.info-label {
+  color: #999;
+  font-size: 14px;
+}
+
+.info-value {
+  color: #333;
+  font-size: 14px;
   font-weight: 500;
 }
 

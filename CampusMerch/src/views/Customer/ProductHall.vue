@@ -1,8 +1,10 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
+import { useRoute } from 'vue-router'
 import { useUserStore } from '../../stores/user'
 import { products, getCategoryOptions } from '../../data/products.js'
 
+const route = useRoute()
 const userStore = useUserStore()
 
 // 滚动到热门商品区域
@@ -10,6 +12,21 @@ const scrollToProducts = () => {
   const element = document.getElementById('product-section')
   if (element) {
     element.scrollIntoView({ behavior: 'smooth' })
+  }
+}
+
+// 滚动到指定商品
+const scrollToProduct = (productId) => {
+  const element = document.getElementById(`product-${productId}`)
+  if (element) {
+    // 滚动到商品位置上方50px处，让商品更居中
+    const offsetTop = element.offsetTop - 50
+    window.scrollTo({ top: offsetTop, behavior: 'smooth' })
+    // 添加高亮效果
+    element.style.boxShadow = '0 0 20px rgba(255, 204, 0, 0.6)'
+    setTimeout(() => {
+      element.style.boxShadow = ''
+    }, 2000)
   }
 }
 
@@ -32,6 +49,12 @@ onMounted(() => {
   if (userStore.searchKeyword) {
     setTimeout(() => {
       scrollToProducts()
+    }, 300)
+  }
+  // 如果有滚动到指定商品的参数，滚动到该商品
+  if (route.query.scrollToProduct) {
+    setTimeout(() => {
+      scrollToProduct(route.query.scrollToProduct)
     }, 300)
   }
 })
@@ -142,6 +165,7 @@ const selectCategory = (category) => {
           v-for="product in filteredProducts" 
           :key="product.id" 
           :to="`/productdetails/${product.id}`"
+          :id="`product-${product.id}`"
           class="product-card"
         >
           <div class="product-image">
