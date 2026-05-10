@@ -156,8 +156,149 @@ const handleCancel = () => {
 const tabs = [
   { key: 'profile', label: '基本信息' },
   { key: 'password', label: '修改密码' },
-  { key: 'email', label: '修改邮箱' }
+  { key: 'email', label: '修改邮箱' },
+  { key: 'reset', label: '找回密码' },
+  { key: 'delete', label: '注销账号' }
 ];
+
+// 注销账号表单
+const deleteAccountForm = ref({
+  password: ''
+});
+
+// 注销确认弹窗
+const showDeleteConfirmModal = ref(false);
+
+// 验证密码并显示确认弹窗
+const confirmDeleteAccount = () => {
+  if (deleteAccountForm.value.password !== '123456') {
+    alert('密码错误，请重新输入！');
+    return;
+  }
+  showDeleteConfirmModal.value = true;
+};
+
+// 确认注销账号
+const handleDeleteAccount = () => {
+  userStore.logout();
+  showDeleteConfirmModal.value = false;
+  deleteAccountForm.value.password = '';
+};
+
+// 取消注销
+const cancelDeleteAccount = () => {
+  showDeleteConfirmModal.value = false;
+  deleteAccountForm.value.password = '';
+};
+
+// 找回密码相关状态
+const resetPasswordForm = ref({
+  email: '',
+  verifyCode: '',
+  newPassword: '',
+  confirmPassword: ''
+});
+
+const verificationCode = ref(''); // 生成的6位验证码
+const verifyCodeSent = ref(false); // 验证码是否已发送
+const verifyCodeSentTime = ref(0); // 验证码发送时间
+const countdown = ref(0); // 倒计时
+const isCodeVerified = ref(false); // 验证码是否已验证
+const originalPassword = ref('User@123'); // 模拟原始密码
+const showFoundPassword = ref(false); // 是否显示找到的密码
+const foundPassword = ref(''); // 找到的密码
+
+let countdownTimer = null;
+
+// 发送验证码
+const sendVerifyCode = () => {
+  if (!resetPasswordForm.value.email || !resetPasswordForm.value.email.includes('@')) {
+    alert('请输入有效的邮箱地址！');
+    return;
+  }
+  
+  // 模拟发送验证码
+  const code = Math.floor(100000 + Math.random() * 900000).toString();
+  verificationCode.value = code;
+  verifyCodeSent.value = true;
+  verifyCodeSentTime.value = Date.now();
+  countdown.value = 60;
+  
+  alert(`验证码已发送至 ${resetPasswordForm.value.email}\n（模拟：${code}）`);
+  
+  // 开始倒计时
+  if (countdownTimer) clearInterval(countdownTimer);
+  countdownTimer = setInterval(() => {
+    countdown.value--;
+    if (countdown.value <= 0) {
+      clearInterval(countdownTimer);
+      countdownTimer = null;
+    }
+  }, 1000);
+};
+
+// 验证验证码
+const verifyCode = () => {
+  if (resetPasswordForm.value.verifyCode.length !== 6) {
+    alert('请输入6位验证码！');
+    return;
+  }
+  
+  if (resetPasswordForm.value.verifyCode !== verificationCode.value) {
+    alert('验证码错误，请重新输入！');
+    return;
+  }
+  
+  isCodeVerified.value = true;
+  foundPassword.value = originalPassword.value;
+  showFoundPassword.value = true;
+  alert('验证码验证成功！');
+};
+
+// 重置密码
+const resetPassword = () => {
+  if (resetPasswordForm.value.newPassword !== resetPasswordForm.value.confirmPassword) {
+    alert('两次输入的密码不一致！');
+    return;
+  }
+  
+  const errors = validatePassword(resetPasswordForm.value.newPassword);
+  if (errors.length > 0) {
+    alert('密码必须：' + errors.join('、'));
+    return;
+  }
+  
+  if (resetPasswordForm.value.newPassword === originalPassword.value) {
+    alert('新密码不能与原密码相同！');
+    return;
+  }
+  
+  // 模拟密码重置成功
+  originalPassword.value = resetPasswordForm.value.newPassword;
+  showSuccessModal.value = true;
+};
+
+// 关闭成功弹窗并重置表单
+const closeSuccessModal = () => {
+  showSuccessModal.value = false;
+  resetPasswordForm.value = {
+    email: '',
+    verifyCode: '',
+    newPassword: '',
+    confirmPassword: ''
+  };
+  isCodeVerified.value = false;
+  showFoundPassword.value = false;
+  verifyCodeSent.value = false;
+  countdown.value = 0;
+  if (countdownTimer) {
+    clearInterval(countdownTimer);
+    countdownTimer = null;
+  }
+};
+
+// 找回密码成功弹窗
+const showSuccessModal = ref(false);
 </script>
 
 <template>
@@ -330,6 +471,110 @@ const tabs = [
               <button type="submit" class="submit-btn">确认修改</button>
             </form>
           </div>
+          
+          <!-- 找回密码 -->
+          <div v-if="activeTab === 'reset'" class="form-section reset-section">
+            <div class="section-header">
+              <h2>找回密码</h2>
+            </div>
+            
+            <div v-if="!isCodeVerified" class="reset-step">
+              <p class="step-title">步骤1：验证邮箱</p>
+              <form class="info-form" @submit.prevent="sendVerifyCode">
+                <div class="form-group">
+                  <label for="resetEmail">邮箱地址</label>
+                  <input 
+                    type="email" 
+                    id="resetEmail" 
+                    v-model="resetPasswordForm.email"
+                    placeholder="请输入您注册的邮箱地址"
+                    required
+                  />
+                </div>
+                <button type="submit" class="send-code-btn" :disabled="countdown > 0">
+                  {{ countdown > 0 ? `${countdown}秒后可重新发送` : '发送验证码' }}
+                </button>
+              </form>
+              
+              <form class="info-form verify-form" @submit.prevent="verifyCode" v-if="verifyCodeSent">
+                <div class="form-group">
+                  <label for="verifyCode">验证码</label>
+                  <div class="verify-code-input">
+                    <input 
+                      type="text" 
+                      id="verifyCode" 
+                      v-model="resetPasswordForm.verifyCode"
+                      placeholder="请输入6位验证码"
+                      maxlength="6"
+                      required
+                    />
+                    <button type="submit" class="verify-btn">验证</button>
+                  </div>
+                </div>
+              </form>
+            </div>
+            
+            <div v-else class="reset-step">
+              <p class="step-title">步骤2：重置密码</p>
+              
+              <div v-if="showFoundPassword" class="found-password-box">
+                <p class="found-label">您找到的密码是：</p>
+                <p class="found-password">{{ foundPassword }}</p>
+              </div>
+              
+              <form class="info-form" @submit.prevent="resetPassword">
+                <div class="form-group">
+                  <label for="newResetPassword">新密码</label>
+                  <input 
+                    type="password" 
+                    id="newResetPassword" 
+                    v-model="resetPasswordForm.newPassword"
+                    placeholder="请输入新密码（8位以上，包含大写字母、小写字母、数字和特殊字符）"
+                    required
+                  />
+                </div>
+                
+                <div class="form-group">
+                  <label for="confirmResetPassword">确认新密码</label>
+                  <input 
+                    type="password" 
+                    id="confirmResetPassword" 
+                    v-model="resetPasswordForm.confirmPassword"
+                    placeholder="请再次输入新密码"
+                    required
+                  />
+                </div>
+                
+                <button type="submit" class="reset-btn">确认重置密码</button>
+              </form>
+            </div>
+          </div>
+          
+          <div v-if="activeTab === 'delete'" class="form-section delete-section">
+            <div class="section-header">
+              <h2>注销账号</h2>
+            </div>
+            
+            <div class="delete-warning">
+              <p class="warning-icon">⚠️</p>
+              <p class="warning-text">注销账号后，您的所有个人信息将被永久删除，此操作不可撤销！</p>
+            </div>
+            
+            <form class="info-form" @submit.prevent="confirmDeleteAccount">
+              <div class="form-group">
+                <label for="deletePassword">当前密码</label>
+                <input 
+                  type="password" 
+                  id="deletePassword" 
+                  v-model="deleteAccountForm.password"
+                  placeholder="请输入当前密码以确认身份"
+                  required
+                />
+              </div>
+              
+              <button type="submit" class="delete-btn">确认注销账号</button>
+            </form>
+          </div>
         </main>
       </div>
     </div>
@@ -348,6 +593,43 @@ const tabs = [
         <div class="confirm-footer">
           <button class="cancel-btn" @click="handleCancel">取消</button>
           <button class="confirm-btn" @click="handleConfirm">确认</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 注销账号确认弹窗 -->
+    <div v-if="showDeleteConfirmModal" class="confirm-modal-overlay" @click.self="cancelDeleteAccount">
+      <div class="confirm-modal delete-modal">
+        <div class="confirm-header">
+          <h3>⚠️ 注销账号</h3>
+          <button class="close-btn" @click="cancelDeleteAccount">×</button>
+        </div>
+        <div class="confirm-body delete-body">
+          <p class="delete-icon">🗑️</p>
+          <p class="delete-title">确定要注销账号吗？</p>
+          <p class="delete-desc">此操作将永久删除您的所有个人信息，且无法恢复！</p>
+        </div>
+        <div class="confirm-footer">
+          <button class="cancel-btn" @click="cancelDeleteAccount">取消</button>
+          <button class="delete-confirm-btn" @click="handleDeleteAccount">确认注销</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 密码重置成功弹窗 -->
+    <div v-if="showSuccessModal" class="confirm-modal-overlay" @click.self="closeSuccessModal">
+      <div class="confirm-modal success-modal">
+        <div class="confirm-header success-header">
+          <h3>🎉 密码重置成功</h3>
+          <button class="close-btn" @click="closeSuccessModal">×</button>
+        </div>
+        <div class="confirm-body success-body">
+          <p class="success-icon">✅</p>
+          <p class="success-title">您的密码已成功重置！</p>
+          <p class="success-desc">请使用新密码重新登录。</p>
+        </div>
+        <div class="confirm-footer">
+          <button class="success-btn" @click="closeSuccessModal">确定</button>
         </div>
       </div>
     </div>
@@ -734,6 +1016,260 @@ const tabs = [
   padding: 15px 25px;
   border-top: 1px solid #e0e0e0;
   background-color: #fafafa;
+}
+
+/* 注销账号相关样式 */
+.delete-section {
+  border: 1px solid #ffcccc;
+}
+
+.delete-section .section-header h2 {
+  color: #d32f2f;
+}
+
+.delete-warning {
+  background-color: #fff5f5;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.warning-icon {
+  font-size: 36px;
+  margin-bottom: 10px;
+}
+
+.warning-text {
+  color: #d32f2f;
+  font-size: 14px;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.delete-btn {
+  width: 100%;
+  padding: 12px 24px;
+  background-color: #f44336;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.delete-btn:hover {
+  background-color: #d32f2f;
+}
+
+/* 注销确认弹窗样式 */
+.delete-modal .confirm-header {
+  background-color: #fff5f5;
+  border-bottom-color: #ffcccc;
+}
+
+.delete-modal .confirm-header h3 {
+  color: #d32f2f;
+}
+
+.delete-body {
+  text-align: center;
+}
+
+.delete-icon {
+  font-size: 48px;
+  margin-bottom: 15px;
+}
+
+.delete-title {
+  font-size: 18px;
+  font-weight: bold;
+  color: #d32f2f;
+  margin: 0 0 10px 0;
+}
+
+.delete-desc {
+  font-size: 14px;
+  color: #666;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.delete-confirm-btn {
+  padding: 10px 24px;
+  background-color: #f44336;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.delete-confirm-btn:hover {
+  background-color: #d32f2f;
+}
+
+/* 找回密码相关样式 */
+.reset-section .section-header h2 {
+  color: #4caf50;
+}
+
+.reset-step {
+  margin-top: 10px;
+}
+
+.step-title {
+  font-size: 16px;
+  font-weight: bold;
+  color: #333;
+  margin: 0 0 20px 0;
+  padding-bottom: 10px;
+  border-bottom: 2px solid #4caf50;
+}
+
+.send-code-btn {
+  width: 100%;
+  padding: 12px 24px;
+  background-color: #4caf50;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.send-code-btn:hover:not(:disabled) {
+  background-color: #388e3c;
+}
+
+.send-code-btn:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+.verify-form {
+  margin-top: 20px;
+}
+
+.verify-code-input {
+  display: flex;
+  gap: 10px;
+}
+
+.verify-code-input input {
+  flex: 1;
+}
+
+.verify-btn {
+  padding: 10px 20px;
+  background-color: #4caf50;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.3s;
+  white-space: nowrap;
+}
+
+.verify-btn:hover {
+  background-color: #388e3c;
+}
+
+.found-password-box {
+  background-color: #e8f5e9;
+  border: 2px solid #4caf50;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.found-label {
+  font-size: 14px;
+  color: #333;
+  margin: 0 0 10px 0;
+}
+
+.found-password {
+  font-size: 24px;
+  font-weight: bold;
+  color: #4caf50;
+  margin: 0;
+  font-family: monospace;
+  letter-spacing: 2px;
+}
+
+.reset-btn {
+  width: 100%;
+  padding: 12px 24px;
+  background-color: #4caf50;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.reset-btn:hover {
+  background-color: #388e3c;
+}
+
+/* 密码重置成功弹窗样式 */
+.success-modal .confirm-header {
+  background-color: #e8f5e9;
+  border-bottom-color: #c8e6c9;
+}
+
+.success-modal .confirm-header h3 {
+  color: #4caf50;
+}
+
+.success-body {
+  text-align: center;
+  padding: 30px 25px;
+}
+
+.success-icon {
+  font-size: 64px;
+  margin-bottom: 15px;
+}
+
+.success-title {
+  font-size: 18px;
+  font-weight: bold;
+  color: #333;
+  margin: 0 0 10px 0;
+}
+
+.success-desc {
+  font-size: 14px;
+  color: #666;
+  margin: 0;
+}
+
+.success-btn {
+  padding: 10px 32px;
+  background-color: #4caf50;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.success-btn:hover {
+  background-color: #388e3c;
 }
 
 /* 返回顶部按钮 */

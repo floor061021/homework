@@ -2,9 +2,13 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { getProductById } from '../../data/products.js'
+import { useUserStore } from '../../stores/user'
+import { useOrdersStore } from '../../stores/orders'
 
 const route = useRoute()
 const router = useRouter()
+const userStore = useUserStore()
+const ordersStore = useOrdersStore()
 
 // 当前商品数据
 const product = ref(null)
@@ -149,8 +153,27 @@ const addToCart = () => {
 
 // 立即购买
 const buyNow = () => {
+  // 检查用户是否登录
+  if (!userStore.isLoggedIn) {
+    alert('请先登录后再购买')
+    userStore.openLoginModal()
+    return
+  }
+  
   if (validateForm()) {
+    // 创建订单
+    const orderData = {
+      product: `${product.value.name}(${selectedColor.value}/${selectedSize.value})`,
+      amount: product.value.price * quantity.value,
+      items: quantity.value
+    }
+    
+    ordersStore.addOrder(orderData)
+    
     alert(`订单提交成功！\n商品: ${product.value.name}\n颜色: ${selectedColor.value}\n尺码: ${selectedSize.value}\n数量: ${quantity.value}\n总价: ¥${(product.value.price * quantity.value).toFixed(2)}`)
+    
+    // 跳转到我的订单页面
+    router.push('/myorders')
   }
 }
 

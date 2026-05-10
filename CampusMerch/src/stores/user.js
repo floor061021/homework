@@ -105,6 +105,15 @@ export const useUserStore = defineStore('user', () => {
 
   // 更新用户信息
   function updateUserInfo(info) {
+    // 如果更新了用户名，需要同步更新订单中的客户名
+    if (info.username && info.username !== userInfo.value.username) {
+      const oldName = userInfo.value.username
+      // 动态导入避免循环依赖
+      import('./orders').then(({ useOrdersStore }) => {
+        const ordersStore = useOrdersStore()
+        ordersStore.updateCustomerName(oldName, info.username)
+      })
+    }
     userInfo.value = { ...userInfo.value, ...info }
   }
   

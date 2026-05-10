@@ -1,25 +1,8 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
+import { useOrdersStore } from '../../stores/orders'
 
-// 订单统计数据
-const stats = ref({
-  pending: 12,
-  approved: 156,
-  rejected: 8,
-  total: 176
-})
-
-// 订单列表数据
-const orders = ref([
-  { id: 'ORD20241201001', customer: '张三', product: '连帽衫-定制款', amount: 199.00, status: 'pending', createTime: '2024-12-01 14:30:25', items: 2 },
-  { id: 'ORD20241201002', customer: '李四', product: 'T恤-校园款', amount: 99.00, status: 'pending', createTime: '2024-12-01 15:45:12', items: 3 },
-  { id: 'ORD20241201003', customer: '王五', product: '文化衫-毕业季', amount: 159.00, status: 'pending', createTime: '2024-12-01 16:20:08', items: 1 },
-  { id: 'ORD20241201004', customer: '赵六', product: '卫衣-学院风', amount: 179.00, status: 'pending', createTime: '2024-12-01 17:15:33', items: 2 },
-  { id: 'ORD20241201005', customer: '孙七', product: '棒球帽-校徽款', amount: 59.00, status: 'pending', createTime: '2024-12-01 18:00:45', items: 5 },
-  { id: 'ORD20241202001', customer: '周八', product: '帆布包-定制', amount: 49.00, status: 'approved', createTime: '2024-12-02 09:30:15', items: 10 },
-  { id: 'ORD20241202002', customer: '吴九', product: '笔记本-校园风', amount: 29.00, status: 'approved', createTime: '2024-12-02 10:15:22', items: 20 },
-  { id: 'ORD20241202003', customer: '郑十', product: '钥匙扣-文创', amount: 19.00, status: 'rejected', createTime: '2024-12-02 11:00:00', items: 15 }
-])
+const ordersStore = useOrdersStore()
 
 // 搜索关键词
 const searchKeyword = ref('')
@@ -27,12 +10,15 @@ const searchKeyword = ref('')
 // 状态筛选
 const statusFilter = ref('all')
 
-// 过滤后的订单
-const filteredOrders = ref(orders.value)
+// 拒绝弹窗相关
+const showRejectModal = ref(false)
+const rejectOrderId = ref('')
+const rejectReason = ref('')
+const rejectError = ref('')
 
-// 筛选订单
-const filterOrders = () => {
-  let result = orders.value
+// 过滤后的订单
+const filteredOrders = computed(() => {
+  let result = ordersStore.orders
   if (statusFilter.value !== 'all') {
     result = result.filter(order => order.status === statusFilter.value)
   }
@@ -44,47 +30,53 @@ const filterOrders = () => {
       order.product.toLowerCase().includes(keyword)
     )
   }
-  filteredOrders.value = result
-}
+  return result
+})
 
-// 审核操作
+// 审核通过
 const handleApprove = (orderId) => {
-  const order = orders.value.find(o => o.id === orderId)
-  if (order) {
-    order.status = 'approved'
-    stats.value.pending--
-    stats.value.approved++
-    filterOrders()
-  }
+  ordersStore.approveOrder(orderId)
 }
 
-const handleReject = (orderId) => {
-  const order = orders.value.find(o => o.id === orderId)
-  if (order) {
-    order.status = 'rejected'
-    stats.value.pending--
-    stats.value.rejected++
-    filterOrders()
+// 打开拒绝弹窗
+const openRejectModal = (orderId) => {
+  rejectOrderId.value = orderId
+  rejectReason.value = ''
+  rejectError.value = ''
+  showRejectModal.value = true
+}
+
+// 关闭拒绝弹窗
+const closeRejectModal = () => {
+  showRejectModal.value = false
+  rejectOrderId.value = ''
+  rejectReason.value = ''
+  rejectError.value = ''
+}
+
+// 确认拒绝订单
+const confirmReject = () => {
+  if (!rejectReason.value.trim()) {
+    rejectError.value = '请填写拒绝理由'
+    return
   }
+  
+  if (rejectReason.value.trim().length < 5) {
+    rejectError.value = '拒绝理由至少需要5个字符'
+    return
+  }
+  
+  ordersStore.rejectOrder(rejectOrderId.value, rejectReason.value.trim())
+  closeRejectModal()
 }
 
 // 获取状态样式
 const getStatusClass = (status) => {
-  const classes = {
-    pending: 'status-pending',
-    approved: 'status-approved',
-    rejected: 'status-rejected'
-  }
-  return classes[status] || ''
+  return ordersStore.getStatusClass(status)
 }
 
 const getStatusText = (status) => {
-  const texts = {
-    pending: '待审核',
-    approved: '已通过',
-    rejected: '已拒绝'
-  }
-  return texts[status] || status
+  return ordersStore.getStatusText(status)
 }
 </script>
 
@@ -98,31 +90,31 @@ const getStatusText = (status) => {
 
     <!-- 统计卡片 -->
     <div class="stats-row">
-      <div class="stat-card">
-        <div class="stat-icon pending-icon">📋</div>
-        <div class="stat-info">
-          <div class="stat-value">{{ stats.pending }}</div>
+      <div class="stat-card pending">
+        <div class="stat-icon">📋</div>
+        <div class="stat-content">
+          <div class="stat-number">{{ ordersStore.stats.pending }}</div>
           <div class="stat-label">待审核</div>
         </div>
       </div>
-      <div class="stat-card">
-        <div class="stat-icon approved-icon">✅</div>
-        <div class="stat-info">
-          <div class="stat-value">{{ stats.approved }}</div>
+      <div class="stat-card approved">
+        <div class="stat-icon">✓</div>
+        <div class="stat-content">
+          <div class="stat-number">{{ ordersStore.stats.approved }}</div>
           <div class="stat-label">已通过</div>
         </div>
       </div>
-      <div class="stat-card">
-        <div class="stat-icon rejected-icon">❌</div>
-        <div class="stat-info">
-          <div class="stat-value">{{ stats.rejected }}</div>
+      <div class="stat-card rejected">
+        <div class="stat-icon">✗</div>
+        <div class="stat-content">
+          <div class="stat-number">{{ ordersStore.stats.rejected }}</div>
           <div class="stat-label">已拒绝</div>
         </div>
       </div>
-      <div class="stat-card">
-        <div class="stat-icon total-icon">📊</div>
-        <div class="stat-info">
-          <div class="stat-value">{{ stats.total }}</div>
+      <div class="stat-card total">
+        <div class="stat-icon">📦</div>
+        <div class="stat-content">
+          <div class="stat-number">{{ ordersStore.stats.total }}</div>
           <div class="stat-label">总订单</div>
         </div>
       </div>
@@ -135,67 +127,95 @@ const getStatusText = (status) => {
           type="text" 
           v-model="searchKeyword" 
           placeholder="搜索订单号、客户名、商品名..."
-          @input="filterOrders"
           class="search-input"
         />
-        <span class="search-icon">🔍</span>
+        <button class="search-btn">🔍</button>
       </div>
-      <div class="filter-select">
-        <select v-model="statusFilter" @change="filterOrders" class="status-select">
-          <option value="all">全部状态</option>
-          <option value="pending">待审核</option>
-          <option value="approved">已通过</option>
-          <option value="rejected">已拒绝</option>
-        </select>
-      </div>
+      <select v-model="statusFilter" class="status-select">
+        <option value="all">全部状态</option>
+        <option value="pending">待审核</option>
+        <option value="approved">已通过</option>
+        <option value="rejected">已拒绝</option>
+      </select>
     </div>
 
     <!-- 订单列表 -->
-    <div class="order-list-card">
-      <h2>订单列表</h2>
-      <div class="order-table-wrapper">
-        <table class="order-table">
-          <thead>
-            <tr>
-              <th>订单号</th>
-              <th>客户</th>
-              <th>商品</th>
-              <th>数量</th>
-              <th>金额</th>
-              <th>下单时间</th>
-              <th>状态</th>
-              <th>操作</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="order in filteredOrders" :key="order.id">
-              <td class="order-id">{{ order.id }}</td>
-              <td>{{ order.customer }}</td>
-              <td class="product-name">{{ order.product }}</td>
-              <td>{{ order.items }}</td>
-              <td class="amount">¥{{ order.amount.toFixed(2) }}</td>
-              <td>{{ order.createTime }}</td>
-              <td><span :class="['status-tag', getStatusClass(order.status)]">{{ getStatusText(order.status) }}</span></td>
-              <td class="actions">
+    <div class="orders-table">
+      <table>
+        <thead>
+          <tr>
+            <th>订单号</th>
+            <th>客户</th>
+            <th>商品</th>
+            <th>数量</th>
+            <th>金额</th>
+            <th>下单时间</th>
+            <th>状态</th>
+            <th>拒绝理由</th>
+            <th>操作</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="order in filteredOrders" :key="order.id">
+            <td>{{ order.id }}</td>
+            <td>{{ order.customer }}</td>
+            <td>{{ order.product }}</td>
+            <td>{{ order.items }}</td>
+            <td>¥{{ order.amount.toFixed(2) }}</td>
+            <td>{{ order.createTime }}</td>
+            <td><span :class="['status-tag', getStatusClass(order.status)]">{{ getStatusText(order.status) }}</span></td>
+            <td>
+              <span v-if="order.rejectReason" class="reject-reason">{{ order.rejectReason }}</span>
+              <span v-else class="no-reason">-</span>
+            </td>
+            <td>
+              <div class="actions">
                 <button 
                   v-if="order.status === 'pending'" 
-                  class="btn btn-approve" 
+                  class="action-btn approve"
                   @click="handleApprove(order.id)"
                 >
                   通过
                 </button>
                 <button 
                   v-if="order.status === 'pending'" 
-                  class="btn btn-reject" 
-                  @click="handleReject(order.id)"
+                  class="action-btn reject"
+                  @click="openRejectModal(order.id)"
                 >
                   拒绝
                 </button>
-                <span v-else class="no-action">-</span>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      
+      <div v-if="filteredOrders.length === 0" class="empty-state">
+        <p>暂无订单</p>
+      </div>
+    </div>
+
+    <!-- 拒绝订单弹窗 -->
+    <div v-if="showRejectModal" class="modal-overlay" @click.self="closeRejectModal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3>拒绝订单</h3>
+          <button class="close-btn" @click="closeRejectModal">×</button>
+        </div>
+        <div class="modal-body">
+          <p>请输入拒绝订单的理由：</p>
+          <textarea 
+            v-model="rejectReason" 
+            placeholder="请输入拒绝理由（至少5个字符）..."
+            rows="4"
+            class="reason-input"
+          ></textarea>
+          <span v-if="rejectError" class="error-message">{{ rejectError }}</span>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-cancel" @click="closeRejectModal">取消</button>
+          <button class="btn-confirm" @click="confirmReject">确认拒绝</button>
+        </div>
       </div>
     </div>
   </main>
@@ -204,42 +224,41 @@ const getStatusText = (status) => {
 <style scoped>
 .main-content {
   padding: 20px;
+  max-width: 1400px;
+  margin: 0 auto;
 }
 
 .page-header {
-  margin-bottom: 20px;
+  margin-bottom: 30px;
 }
 
 .page-header h1 {
-  margin: 0;
-  font-size: 24px;
+  font-size: 28px;
   color: #333;
+  margin: 0 0 10px 0;
 }
 
 .page-header p {
-  margin: 5px 0 0 0;
   color: #999;
-  font-size: 14px;
+  margin: 0;
 }
 
 /* 统计卡片 */
 .stats-row {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
   gap: 20px;
-  margin-bottom: 20px;
-  flex-wrap: wrap;
+  margin-bottom: 30px;
 }
 
 .stat-card {
-  flex: 1;
-  min-width: 150px;
   background: white;
-  border-radius: 8px;
+  border-radius: 12px;
   padding: 20px;
   display: flex;
   align-items: center;
   gap: 15px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 2px 10px rgba(0,0,0,0.05);
 }
 
 .stat-icon {
@@ -252,29 +271,28 @@ const getStatusText = (status) => {
   font-size: 24px;
 }
 
-.pending-icon {
-  background: #fff3e0;
+.stat-card.pending .stat-icon {
+  background: #fff3cd;
 }
 
-.approved-icon {
-  background: #e8f5e9;
+.stat-card.approved .stat-icon {
+  background: #d4edda;
 }
 
-.rejected-icon {
-  background: #ffebee;
+.stat-card.rejected .stat-icon {
+  background: #f8d7da;
 }
 
-.total-icon {
-  background: #e3f2fd;
+.stat-card.total .stat-icon {
+  background: #e7f3ff;
 }
 
-.stat-info {
-  display: flex;
-  flex-direction: column;
+.stat-content {
+  flex: 1;
 }
 
-.stat-value {
-  font-size: 24px;
+.stat-number {
+  font-size: 28px;
   font-weight: bold;
   color: #333;
 }
@@ -287,121 +305,112 @@ const getStatusText = (status) => {
 /* 搜索栏 */
 .search-bar {
   display: flex;
-  gap: 15px;
+  gap: 20px;
   margin-bottom: 20px;
-  flex-wrap: wrap;
   align-items: center;
 }
 
 .search-input-wrapper {
-  position: relative;
   flex: 1;
-  min-width: 200px;
-  max-width: 400px;
+  display: flex;
+  max-width: 500px;
 }
 
 .search-input {
-  width: 100%;
-  padding: 10px 40px 10px 15px;
+  flex: 1;
+  padding: 12px 15px;
   border: 1px solid #ddd;
-  border-radius: 6px;
+  border-radius: 8px 0 0 8px;
   font-size: 14px;
-  box-sizing: border-box;
 }
 
-.search-icon {
-  position: absolute;
-  right: 12px;
-  top: 50%;
-  transform: translateY(-50%);
+.search-btn {
+  padding: 12px 20px;
+  background: #ffcc00;
+  border: none;
+  border-radius: 0 8px 8px 0;
+  cursor: pointer;
+  font-size: 16px;
 }
 
 .status-select {
-  padding: 10px 15px;
+  padding: 12px 20px;
   border: 1px solid #ddd;
-  border-radius: 6px;
+  border-radius: 8px;
   font-size: 14px;
   background: white;
+  cursor: pointer;
 }
 
-/* 订单列表卡片 */
-.order-list-card {
+/* 订单表格 */
+.orders-table {
   background: white;
-  border-radius: 8px;
-  padding: 20px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  border-radius: 12px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+  overflow: hidden;
 }
 
-.order-list-card h2 {
-  margin: 0 0 20px 0;
-  font-size: 16px;
-  color: #333;
-}
-
-.order-table-wrapper {
-  overflow-x: auto;
-}
-
-.order-table {
+.orders-table table {
   width: 100%;
   border-collapse: collapse;
 }
 
-.order-table th,
-.order-table td {
-  padding: 12px;
+.orders-table th,
+.orders-table td {
+  padding: 15px;
   text-align: left;
   border-bottom: 1px solid #f0f0f0;
-  font-size: 14px;
 }
 
-.order-table th {
+.orders-table th {
   background: #fafafa;
   font-weight: 600;
   color: #666;
+  font-size: 14px;
 }
 
-.order-table tr:hover {
-  background: #fafafa;
+.orders-table tbody tr:hover {
+  background: #f9f9f9;
 }
 
-.order-id {
-  font-family: monospace;
-  color: #1890ff;
-}
-
-.product-name {
-  max-width: 200px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.amount {
-  font-weight: 600;
-  color: #333;
-}
-
+/* 状态标签 */
 .status-tag {
+  display: inline-block;
   padding: 4px 12px;
   border-radius: 20px;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 500;
 }
 
 .status-pending {
-  background: #fff3e0;
-  color: #f59e0b;
+  background: #fff3cd;
+  color: #856404;
 }
 
 .status-approved {
-  background: #e8f5e9;
-  color: #10b981;
+  background: #d4edda;
+  color: #155724;
 }
 
 .status-rejected {
-  background: #ffebee;
-  color: #ef4444;
+  background: #f8d7da;
+  color: #721c24;
+}
+
+/* 拒绝理由 */
+.reject-reason {
+  font-size: 13px;
+  color: #dc3545;
+  max-width: 150px;
+  display: inline-block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.no-reason {
+  color: #999;
+  font-size: 13px;
 }
 
 /* 操作按钮 */
@@ -410,35 +419,198 @@ const getStatusText = (status) => {
   gap: 8px;
 }
 
-.btn {
-  padding: 6px 12px;
+.action-btn {
+  padding: 6px 16px;
   border: none;
   border-radius: 4px;
-  font-size: 12px;
+  font-size: 13px;
+  font-weight: 500;
   cursor: pointer;
   transition: all 0.3s;
 }
 
-.btn-approve {
-  background: #10b981;
+.action-btn.approve {
+  background: #28a745;
   color: white;
 }
 
-.btn-approve:hover {
-  background: #059669;
+.action-btn.approve:hover {
+  background: #218838;
 }
 
-.btn-reject {
-  background: #ef4444;
+.action-btn.reject {
+  background: #dc3545;
   color: white;
 }
 
-.btn-reject:hover {
-  background: #dc2626;
+.action-btn.reject:hover {
+  background: #c82333;
 }
 
-.no-action {
+/* 空状态 */
+.empty-state {
+  padding: 60px 20px;
+  text-align: center;
+}
+
+.empty-state p {
   color: #999;
+  font-size: 16px;
+}
+
+/* 弹窗遮罩 */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+/* 弹窗内容 */
+.modal-content {
+  background: white;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 480px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.modal-header h3 {
+  margin: 0;
+  font-size: 18px;
+  color: #333;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: #999;
+  padding: 0;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.close-btn:hover {
+  color: #333;
+}
+
+.modal-body {
+  padding: 20px;
+}
+
+.modal-body p {
+  margin: 0 0 15px 0;
+  font-size: 14px;
+  color: #666;
+}
+
+.reason-input {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 14px;
+  resize: none;
+  box-sizing: border-box;
+}
+
+.reason-input:focus {
+  outline: none;
+  border-color: #ffcc00;
+}
+
+.error-message {
+  display: block;
+  color: #dc3545;
   font-size: 12px;
+  margin-top: 10px;
+}
+
+.modal-footer {
+  display: flex;
+  gap: 15px;
+  padding: 20px;
+  border-top: 1px solid #f0f0f0;
+  justify-content: flex-end;
+}
+
+.btn-cancel {
+  padding: 10px 24px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  background: white;
+  color: #666;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.btn-cancel:hover {
+  background: #f5f5f5;
+}
+
+.btn-confirm {
+  padding: 10px 24px;
+  border: none;
+  border-radius: 6px;
+  background: #dc3545;
+  color: white;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.btn-confirm:hover {
+  background: #c82333;
+}
+
+/* 响应式 */
+@media (max-width: 768px) {
+  .stats-row {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .search-bar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .search-input-wrapper {
+    max-width: none;
+  }
+  
+  .orders-table {
+    overflow-x: auto;
+  }
+  
+  .orders-table th,
+  .orders-table td {
+    padding: 10px 8px;
+    font-size: 12px;
+  }
+  
+  .action-btn {
+    padding: 4px 10px;
+    font-size: 11px;
+  }
 }
 </style>

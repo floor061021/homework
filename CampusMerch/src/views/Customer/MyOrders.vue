@@ -1,12 +1,18 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useUserStore } from '../../stores/user'
-import { products } from '../../data/products.js'
+import { useOrdersStore } from '../../stores/orders'
 
 const userStore = useUserStore()
+const ordersStore = useOrdersStore()
 
 // 返回顶部按钮显示状态
 const showBackTop = ref(false)
+
+// 确认收货弹窗
+const showConfirmModal = ref(false)
+const confirmOrderId = ref('')
+const confirmOrderInfo = ref(null)
 
 // 滚动到顶部
 const scrollToTop = () => {
@@ -29,96 +35,56 @@ onUnmounted(() => {
 // 订单状态选项
 const statusOptions = [
   { value: 'all', label: '全部订单' },
-  { value: 'pending_payment', label: '待付款' },
-  { value: 'pending_shipping', label: '待发货' },
-  { value: 'pending_receipt', label: '待收货' },
-  { value: 'completed', label: '已完成' }
+  { value: 'pending', label: '待审核' },
+  { value: 'approved', label: '已通过' },
+  { value: 'rejected', label: '已拒绝' },
+  { value: 'completed', label: '已收货' }
 ]
 
 // 当前选中的状态
 const activeStatus = ref('all')
 
-// 模拟订单数据
-const orders = ref([
-  {
-    id: 'ORD20240115001',
-    createTime: '2024-01-15 14:30:00',
-    status: 'pending_receipt',
-    totalPrice: 398.00,
-    items: [
-      { productId: 'P001', name: '连帽衫', price: 199, quantity: 2 }
-    ]
-  },
-  {
-    id: 'ORD20240114002',
-    createTime: '2024-01-14 10:20:00',
-    status: 'completed',
-    totalPrice: 99.00,
-    items: [
-      { productId: 'P002', name: 'T恤', price: 99, quantity: 1 }
-    ]
-  },
-  {
-    id: 'ORD20240113003',
-    createTime: '2024-01-13 16:45:00',
-    status: 'pending_shipping',
-    totalPrice: 59.00,
-    items: [
-      { productId: 'P003', name: '帽子', price: 59, quantity: 1 }
-    ]
-  },
-  {
-    id: 'ORD20240112004',
-    createTime: '2024-01-12 09:15:00',
-    status: 'pending_payment',
-    totalPrice: 159.00,
-    items: [
-      { productId: 'P004', name: '卫衣', price: 159, quantity: 1 }
-    ]
-  },
-  {
-    id: 'ORD20240111005',
-    createTime: '2024-01-11 20:00:00',
-    status: 'completed',
-    totalPrice: 499.00,
-    items: [
-      { productId: 'P001', name: '连帽衫', price: 199, quantity: 2 },
-      { productId: 'P003', name: '帽子', price: 59, quantity: 2 }
-    ]
-  }
-])
-
-// 根据商品ID获取商品图片
-const getProductImage = (productId) => {
-  const product = products.value.find(p => p.id === productId)
-  return product ? product.image : ''
-}
-
-// 过滤后的订单列表
+// 过滤后的订单列表（当前用户的订单）
 const filteredOrders = computed(() => {
-  if (activeStatus.value === 'all') {
-    return orders.value
+  let result = ordersStore.currentUserOrders
+  if (activeStatus.value !== 'all') {
+    result = result.filter(order => order.status === activeStatus.value)
   }
-  return orders.value.filter(order => order.status === activeStatus.value)
+  return result
 })
 
-// 获取状态标签样式
+// 获取状态样式
 const getStatusStyle = (status) => {
   const styles = {
-    pending_payment: { text: '待付款', color: '#ff6b6b' },
-    pending_shipping: { text: '待发货', color: '#ffa502' },
-    pending_receipt: { text: '待收货', color: '#ffcc00' },
-    completed: { text: '已完成', color: '#4ecdc4' }
+    pending: { text: '待审核', color: '#ffa502' },
+    approved: { text: '已通过', color: '#4ecdc4' },
+    rejected: { text: '已拒绝', color: '#ff6b6b' },
+    completed: { text: '已收货', color: '#4caf50' }
   }
   return styles[status] || { text: '未知', color: '#999' }
 }
 
+// 打开确认收货弹窗
+const openConfirmModal = (order) => {
+  confirmOrderId.value = order.id
+  confirmOrderInfo.value = order
+  showConfirmModal.value = true
+}
+
+// 关闭确认收货弹窗
+const closeConfirmModal = () => {
+  showConfirmModal.value = false
+  confirmOrderId.value = ''
+  confirmOrderInfo.value = null
+}
+
 // 确认收货
-const confirmReceipt = (orderId) => {
-  const order = orders.value.find(o => o.id === orderId)
-  if (order && order.status === 'pending_receipt') {
+const doConfirmReceipt = () => {
+  const order = ordersStore.orders.find(o => o.id === confirmOrderId.value)
+  if (order && order.status === 'approved') {
     order.status = 'completed'
-    alert(`订单 ${orderId} 已确认收货`)
+    ordersStore.saveOrders()
+    closeConfirmModal()
   }
 }
 </script>
@@ -171,16 +137,17 @@ const confirmReceipt = (orderId) => {
               <div class="order-time">{{ order.createTime }}</div>
             </div>
             
-            <!-- 订单商品列表 -->
+            <!-- 订单商品信息 -->
             <div class="order-items">
-              <div v-for="(item, index) in order.items" :key="index" class="order-item">
-                <div class="item-image">
-                  <img :src="getProductImage(item.productId)" :alt="item.name" class="product-img" />
-                </div>
+              <div class="order-item">
                 <div class="item-info">
-                  <h4>{{ item.name }}</h4>
-                  <p class="item-price">¥{{ item.price.toFixed(2) }}</p>
-                  <p class="item-quantity">x{{ item.quantity }}</p>
+                  <h4>{{ order.product }}</h4>
+                  <p class="item-price">¥{{ order.amount.toFixed(2) }}</p>
+                  <p class="item-quantity">x{{ order.items }}</p>
+                  <!-- 拒绝理由 -->
+                  <p v-if="order.rejectReason" class="reject-reason">
+                    <span class="reason-label">拒绝理由：</span>{{ order.rejectReason }}
+                  </p>
                 </div>
               </div>
             </div>
@@ -189,7 +156,7 @@ const confirmReceipt = (orderId) => {
             <div class="order-footer">
               <div class="order-total">
                 <span>实付款：</span>
-                <span class="total-price">¥{{ order.totalPrice.toFixed(2) }}</span>
+                <span class="total-price">¥{{ order.amount.toFixed(2) }}</span>
               </div>
               <div class="order-status">
                 <span :style="{ color: getStatusStyle(order.status).color }">
@@ -198,23 +165,17 @@ const confirmReceipt = (orderId) => {
               </div>
               <div class="order-actions">
                 <button 
-                  v-if="order.status === 'pending_payment'" 
+                  v-if="order.status === 'approved'" 
                   class="action-btn primary"
-                >
-                  立即支付
-                </button>
-                <button 
-                  v-if="order.status === 'pending_receipt'" 
-                  class="action-btn primary"
-                  @click="confirmReceipt(order.id)"
+                  @click="openConfirmModal(order)"
                 >
                   确认收货
                 </button>
                 <button 
-                  v-if="order.status === 'completed'" 
+                  v-if="order.status === 'pending'" 
                   class="action-btn secondary"
                 >
-                  查看详情
+                  取消订单
                 </button>
               </div>
             </div>
@@ -225,6 +186,43 @@ const confirmReceipt = (orderId) => {
 
     <!-- 返回顶部按钮 -->
     <button class="back-to-top" @click="scrollToTop" v-show="showBackTop">↑</button>
+    
+    <!-- 确认收货弹窗 -->
+    <div v-if="showConfirmModal" class="modal-overlay" @click.self="closeConfirmModal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3>确认收货</h3>
+          <button class="close-btn" @click="closeConfirmModal">×</button>
+        </div>
+        <div class="modal-body">
+          <div class="confirm-icon">📦</div>
+          <p>请确认您已收到以下商品：</p>
+          <div class="order-summary">
+            <div class="summary-item">
+              <span class="label">订单号：</span>
+              <span class="value">{{ confirmOrderInfo?.id }}</span>
+            </div>
+            <div class="summary-item">
+              <span class="label">商品：</span>
+              <span class="value">{{ confirmOrderInfo?.product }}</span>
+            </div>
+            <div class="summary-item">
+              <span class="label">数量：</span>
+              <span class="value">{{ confirmOrderInfo?.items }} 件</span>
+            </div>
+            <div class="summary-item">
+              <span class="label">金额：</span>
+              <span class="value">¥{{ confirmOrderInfo?.amount.toFixed(2) }}</span>
+            </div>
+          </div>
+          <p class="confirm-tip">确认收货后，订单状态将变为"已收货"</p>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-cancel" @click="closeConfirmModal">取消</button>
+          <button class="btn-confirm" @click="doConfirmReceipt">确认收货</button>
+        </div>
+      </div>
+    </div>
     
     <!-- 版权标识 -->
     <footer class="page-footer">
@@ -402,12 +400,6 @@ const confirmReceipt = (orderId) => {
   gap: 15px;
 }
 
-.order-item:not(:last-child) {
-  padding-bottom: 15px;
-  border-bottom: 1px solid #f5f5f5;
-  margin-bottom: 15px;
-}
-
 .item-image {
   width: 80px;
   height: 80px;
@@ -417,17 +409,6 @@ const confirmReceipt = (orderId) => {
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-}
-
-.image-placeholder {
-  font-size: 32px;
-}
-
-.product-img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  border-radius: 4px;
 }
 
 .item-info {
@@ -455,6 +436,20 @@ const confirmReceipt = (orderId) => {
   margin: 0;
   font-size: 12px;
   color: #999;
+}
+
+.reject-reason {
+  margin: 5px 0 0 0;
+  font-size: 12px;
+  color: #dc3545;
+  background-color: #fff5f5;
+  padding: 8px 12px;
+  border-radius: 4px;
+  border-left: 3px solid #dc3545;
+}
+
+.reason-label {
+  font-weight: 500;
 }
 
 .order-footer {
@@ -541,6 +536,151 @@ const confirmReceipt = (orderId) => {
 .back-to-top:hover {
   background-color: #e6b800;
   transform: translateY(-3px);
+}
+
+/* 弹窗遮罩 */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+/* 弹窗内容 */
+.modal-content {
+  background: white;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 480px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.modal-header h3 {
+  margin: 0;
+  font-size: 18px;
+  color: #333;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: #999;
+  padding: 0;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.close-btn:hover {
+  color: #333;
+}
+
+.modal-body {
+  padding: 20px;
+  text-align: center;
+}
+
+.confirm-icon {
+  font-size: 64px;
+  margin-bottom: 20px;
+}
+
+.modal-body p {
+  margin: 0 0 20px 0;
+  font-size: 16px;
+  color: #333;
+}
+
+.order-summary {
+  background-color: #f8f8f8;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 20px;
+  text-align: left;
+}
+
+.summary-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 0;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.summary-item:last-child {
+  border-bottom: none;
+}
+
+.summary-item .label {
+  color: #999;
+  font-size: 14px;
+}
+
+.summary-item .value {
+  color: #333;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.confirm-tip {
+  font-size: 13px !important;
+  color: #999 !important;
+}
+
+.modal-footer {
+  display: flex;
+  gap: 15px;
+  padding: 20px;
+  border-top: 1px solid #f0f0f0;
+  justify-content: center;
+}
+
+.btn-cancel {
+  padding: 12px 30px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  background: white;
+  color: #666;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.btn-cancel:hover {
+  background: #f5f5f5;
+}
+
+.btn-confirm {
+  padding: 12px 30px;
+  border: none;
+  border-radius: 6px;
+  background: #ffcc00;
+  color: #1a1a1a;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.btn-confirm:hover {
+  background: #e6b800;
 }
 
 /* 版权标识 */

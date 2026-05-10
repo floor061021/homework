@@ -1,7 +1,9 @@
 import { ref, watch, computed } from 'vue'
 
 // 预设分类列表（作为基础分类）
-const defaultCategories = ['上衣', '裤子', '帽子', '其他']
+const defaultCategories = [
+  '上衣', '裤子', '帽子', '其他'
+]
 
 // 从localStorage读取分类，如果没有则使用默认分类
 const loadCategories = () => {
@@ -122,6 +124,34 @@ export const getProductStatusOptions = () => {
   return [{ value: 'all', label: '全部' }, ...productStatuses.value]
 }
 
+// 尺码模板
+const sizeTemplates = {
+  '上衣': [
+    { id: 's', name: 'S', stock: 20 },
+    { id: 'm', name: 'M', stock: 40 },
+    { id: 'l', name: 'L', stock: 40 },
+    { id: 'xl', name: 'XL', stock: 30 },
+    { id: 'xxl', name: 'XXL', stock: 20 }
+  ],
+  '帽子': [
+    { id: 's', name: 'S (54-56cm)', stock: 40 },
+    { id: 'm', name: 'M (56-58cm)', stock: 50 },
+    { id: 'l', name: 'L (58-60cm)', stock: 40 }
+  ],
+  '裤子': [
+    { id: '28', name: '28码', stock: 12 },
+    { id: '30', name: '30码', stock: 16 },
+    { id: '32', name: '32码', stock: 16 },
+    { id: '34', name: '34码', stock: 12 },
+    { id: '36', name: '36码', stock: 8 }
+  ],
+  '其他': [
+    { id: 's', name: '小号', stock: 50 },
+    { id: 'm', name: '中号', stock: 60 },
+    { id: 'l', name: '大号', stock: 50 }
+  ]
+}
+
 // 初始商品数据
 const defaultProducts = [
   {
@@ -134,7 +164,13 @@ const defaultProducts = [
     status: 'active',
     category: '上衣',
     createTime: '2024-01-10',
-    image: 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=black%20hoodie%20sweatshirt%20product%20photo%20white%20background&image_size=square_hd'
+    image: 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=black%20hoodie%20sweatshirt%20product%20photo%20white%20background&image_size=square_hd',
+    colors: [
+      { id: 'black', name: '黑色', hex: '#000000' },
+      { id: 'gray', name: '灰色', hex: '#808080' },
+      { id: 'navy', name: '深蓝', hex: '#1a1a4e' }
+    ],
+    sizes: [...sizeTemplates['上衣']]
   },
   {
     id: 'P002',
@@ -146,7 +182,14 @@ const defaultProducts = [
     status: 'active',
     category: '上衣',
     createTime: '2024-01-11',
-    image: 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=white%20cotton%20t-shirt%20product%20photo%20white%20background&image_size=square_hd'
+    image: 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=white%20cotton%20t-shirt%20product%20photo%20white%20background&image_size=square_hd',
+    colors: [
+      { id: 'white', name: '白色', hex: '#FFFFFF' },
+      { id: 'black', name: '黑色', hex: '#000000' },
+      { id: 'gray', name: '灰色', hex: '#808080' },
+      { id: 'blue', name: '蓝色', hex: '#4169E1' }
+    ],
+    sizes: [...sizeTemplates['上衣']]
   },
   {
     id: 'P003',
@@ -158,7 +201,13 @@ const defaultProducts = [
     status: 'inactive',
     category: '帽子',
     createTime: '2024-01-12',
-    image: 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=baseball%20cap%20hat%20product%20photo%20white%20background&image_size=square_hd'
+    image: 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=baseball%20cap%20hat%20product%20photo%20white%20background&image_size=square_hd',
+    colors: [
+      { id: 'black', name: '黑色', hex: '#000000' },
+      { id: 'gray', name: '灰色', hex: '#808080' },
+      { id: 'white', name: '白色', hex: '#FFFFFF' }
+    ],
+    sizes: [...sizeTemplates['帽子']]
   },
   {
     id: 'P004',
@@ -170,7 +219,13 @@ const defaultProducts = [
     status: 'active',
     category: '上衣',
     createTime: '2024-01-13',
-    image: 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=gray%20crewneck%20sweatshirt%20product%20photo%20white%20background&image_size=square_hd'
+    image: 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=gray%20crewneck%20sweatshirt%20product%20photo%20white%20background&image_size=square_hd',
+    colors: [
+      { id: 'gray', name: '灰色', hex: '#808080' },
+      { id: 'black', name: '黑色', hex: '#000000' },
+      { id: 'white', name: '白色', hex: '#FFFFFF' }
+    ],
+    sizes: [...sizeTemplates['上衣']]
   },
   {
     id: 'P005',
@@ -182,7 +237,13 @@ const defaultProducts = [
     status: 'active',
     category: '裤子',
     createTime: '2024-01-14',
-    image: 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=black%20cotton%20pants%20trousers%20product%20photo%20white%20background&image_size=square_hd'
+    image: 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=black%20cotton%20pants%20trousers%20product%20photo%20white%20background&image_size=square_hd',
+    colors: [
+      { id: 'black', name: '黑色', hex: '#000000' },
+      { id: 'gray', name: '灰色', hex: '#808080' },
+      { id: 'khaki', name: '卡其', hex: '#C3B091' }
+    ],
+    sizes: [...sizeTemplates['裤子']]
   },
   {
     id: 'P006',
@@ -194,7 +255,13 @@ const defaultProducts = [
     status: 'active',
     category: '裤子',
     createTime: '2024-01-15',
-    image: 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=black%20athletic%20jogger%20pants%20product%20photo%20white%20background&image_size=square_hd'
+    image: 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=black%20athletic%20jogger%20pants%20product%20photo%20white%20background&image_size=square_hd',
+    colors: [
+      { id: 'black', name: '黑色', hex: '#000000' },
+      { id: 'gray', name: '灰色', hex: '#808080' },
+      { id: 'navy', name: '深蓝', hex: '#1a1a4e' }
+    ],
+    sizes: [...sizeTemplates['裤子']]
   },
   {
     id: 'P007',
@@ -206,7 +273,14 @@ const defaultProducts = [
     status: 'active',
     category: '帽子',
     createTime: '2024-01-16',
-    image: 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=navy%20blue%20baseball%20cap%20product%20photo%20white%20background&image_size=square_hd'
+    image: 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=navy%20blue%20baseball%20cap%20product%20photo%20white%20background&image_size=square_hd',
+    colors: [
+      { id: 'navy', name: '藏蓝', hex: '#1a1a4e' },
+      { id: 'black', name: '黑色', hex: '#000000' },
+      { id: 'white', name: '白色', hex: '#FFFFFF' },
+      { id: 'red', name: '红色', hex: '#DC143C' }
+    ],
+    sizes: [...sizeTemplates['帽子']]
   },
   {
     id: 'P008',
@@ -218,16 +292,91 @@ const defaultProducts = [
     status: 'active',
     category: '其他',
     createTime: '2024-01-17',
-    image: 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=canvas%20tote%20bag%20product%20photo%20white%20background&image_size=square_hd'
+    image: 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=canvas%20tote%20bag%20product%20photo%20white%20background&image_size=square_hd',
+    colors: [
+      { id: 'beige', name: '米白', hex: '#F5F5DC' },
+      { id: 'black', name: '黑色', hex: '#000000' },
+      { id: 'brown', name: '棕色', hex: '#8B4513' }
+    ],
+    sizes: [...sizeTemplates['其他']]
   }
 ]
+
+// 商品数据迁移：确保所有商品都有colors和sizes
+const migrateProductData = (products) => {
+  return products.map(product => {
+    if (!product.colors || !product.colors.length) {
+      product.colors = getDefaultColors(product.category)
+    }
+    if (!product.sizes || !product.sizes.length) {
+      product.sizes = getDefaultSizes(product.category)
+    }
+    return product
+  })
+}
+
+// 根据商品类别获取默认颜色
+const getDefaultColors = (category) => {
+  const colorMap = {
+    '上衣': [
+      { id: 'black', name: '黑色', hex: '#000000' },
+      { id: 'white', name: '白色', hex: '#FFFFFF' },
+      { id: 'gray', name: '灰色', hex: '#808080' }
+    ],
+    '裤子': [
+      { id: 'black', name: '黑色', hex: '#000000' },
+      { id: 'gray', name: '灰色', hex: '#808080' }
+    ],
+    '帽子': [
+      { id: 'black', name: '黑色', hex: '#000000' },
+      { id: 'gray', name: '灰色', hex: '#808080' }
+    ],
+    '其他': [
+      { id: 'black', name: '黑色', hex: '#000000' },
+      { id: 'white', name: '白色', hex: '#FFFFFF' }
+    ]
+  }
+  return colorMap[category] || colorMap['其他']
+}
+
+// 根据商品类别获取默认尺码
+const getDefaultSizes = (category) => {
+  const categorySizes = {
+    '上衣': [
+      { id: 's', name: 'S', stock: 20 },
+      { id: 'm', name: 'M', stock: 40 },
+      { id: 'l', name: 'L', stock: 40 },
+      { id: 'xl', name: 'XL', stock: 30 },
+      { id: 'xxl', name: 'XXL', stock: 20 }
+    ],
+    '帽子': [
+      { id: 's', name: 'S (54-56cm)', stock: 40 },
+      { id: 'm', name: 'M (56-58cm)', stock: 50 },
+      { id: 'l', name: 'L (58-60cm)', stock: 40 }
+    ],
+    '裤子': [
+      { id: '28', name: '28码', stock: 12 },
+      { id: '30', name: '30码', stock: 16 },
+      { id: '32', name: '32码', stock: 16 },
+      { id: '34', name: '34码', stock: 12 },
+      { id: '36', name: '36码', stock: 8 }
+    ],
+    '其他': [
+      { id: 's', name: '小号', stock: 50 },
+      { id: 'm', name: '中号', stock: 60 },
+      { id: 'l', name: '大号', stock: 50 }
+    ]
+  }
+  return categorySizes[category] || categorySizes['其他']
+}
 
 // 从localStorage读取数据，如果没有则使用默认数据
 const loadProducts = () => {
   const stored = localStorage.getItem('campus_products')
   if (stored) {
     try {
-      return JSON.parse(stored)
+      const parsed = JSON.parse(stored)
+      return migrateProductData(parsed)
     } catch {
       return defaultProducts
     }
